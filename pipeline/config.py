@@ -21,8 +21,8 @@ class Config:
     workdir: Path = Path(".private/work")
     dpi: int = 200
 
-    # 抽样口径：每轮抽 20 篇，最多 5 轮；每格目标 4 篇
-    target_per_cell: int = 4
+    # 抽样口径：每轮抽 20 篇，最多 5 轮；每格目标 5 篇
+    target_per_cell: int = 5
     pool_per_round: int = 20
     max_rounds_per_cell: int = 5
 
