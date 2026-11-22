@@ -23,6 +23,23 @@ SOURCE_RE = re.compile(r"S\d{6,}")
 
 ORGANIC_SUBFIELD = "Organic Chemistry"
 
+# 有机论文的强正向特征：合成、机理、结构、反应类型、化合物类别、人名反应
+ORGANIC_STRONG = re.compile(
+    r"synthes|synthetic|prepar|formed|formation|reaction|mechanism|kinetic|"
+    r"catalys|catalyzed|intermediate|structure|stereochem|configur|conformation|"
+    r"rearrang|condensat|cycliz|cycloaddit|addition|elimination|substitut|"
+    r"hydrolysis|oxidat|reduct|hydrogenat|halogenat|nitrat|sulfonat|"
+    r"alkylat|acylat|esterif|amidat|polymeriz|cleavage|protection|"
+    r"compound|derivat|ester|amide|amine|alcohol|ketone|aldehyde|ether|"
+    r"halide|nitrile|oxime|hydrazone|heterocycl|alkaloid|terpene|steroid|"
+    r"peptide|nucleosid|carbohydrat|amino acid|aromatic|aliphatic|alkyl|aryl|"
+    r"grignard|diels|wittig|friedel|reformatsky|claisen|aldol|michael|"
+    r"mannich|pinacol|beckmann|hofmann|curtius|schmidt|baeyer|perkin|"
+    r"knoevenagel|dieckmann|robinson|"
+    r"on the action|constitution|studies on|studies in",
+    re.I,
+)
+
 # 明显非有机的标题特征：物性、晶体、谱学理论等
 NON_ORGANIC_TITLE = re.compile(
     r"conduct|superconduct|magnet|dielectric|ferroelectr|semiconduct|band[ -]gap|"
@@ -32,33 +49,23 @@ NON_ORGANIC_TITLE = re.compile(
     r"refractive index|phase transition|specific heat|calorimetr",
     re.I,
 )
-ORGANIC_TITLE_HINT = re.compile(
-    r"synthes|prepar|reaction|derivat|compound|ester|amide|amine|alcohol|"
-    r"ketone|aldehyde|ether|halide|cycli|condensat|rearrang|stereochem|"
-    r"alkyl|aryl|heterocycl|oxidation|reduction|catalys",
-    re.I,
-)
 
 
 def is_organic_work(work: dict) -> bool:
-    """用 OpenAlex 学科标签 + 标题特征挡掉明显非有机的文章。
+    """判定是否像有机论文。
 
-    topics 按相关度排序，要求第一标签就是有机化学，避免把「材料化学 + 有机」
-    这类混挂文章当成有机论文。
+    先看标题里的强正向词（合成、机理、反应、化合物类别等），命中即算有机；
+    没有再退回 OpenAlex 学科标签，要求第一标签是有机化学。
     """
-    topics = work.get("topics") or []
     title = work.get("title") or ""
+    if ORGANIC_STRONG.search(title):
+        return True
+    topics = work.get("topics") or []
     if topics:
         primary = (topics[0].get("subfield") or {}).get("display_name")
-        if primary != ORGANIC_SUBFIELD:
-            return False
-    else:
-        # 早期文献常没有学科标签，退回标题判断
-        if not ORGANIC_TITLE_HINT.search(title):
-            return False
-    if NON_ORGANIC_TITLE.search(title) and not ORGANIC_TITLE_HINT.search(title):
-        return False
-    return True
+        if primary == ORGANIC_SUBFIELD and not NON_ORGANIC_TITLE.search(title):
+            return True
+    return False
 
 
 @dataclass(frozen=True)
