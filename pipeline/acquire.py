@@ -92,10 +92,17 @@ def candidate_urls(doi: str, config: Config) -> list[tuple[str, str]]:
     return found
 
 
-def download_pdf(url: str, dest: Path, timeout: int = 120) -> tuple[bool, str]:
+def download_pdf(
+    url: str,
+    dest: Path,
+    timeout: int = 120,
+    session: requests.Session | None = None,
+) -> tuple[bool, str]:
+    client = session or requests
+    headers = {"User-Agent": UA}
     try:
-        with requests.get(
-            url, timeout=timeout, headers={"User-Agent": UA}, stream=True, allow_redirects=True
+        with client.get(
+            url, timeout=timeout, headers=headers, stream=True, allow_redirects=True
         ) as resp:
             if resp.status_code != 200:
                 return False, f"http_{resp.status_code}"
