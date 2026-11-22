@@ -1,0 +1,21 @@
+# 公库零数据：以下目录与文件只允许出现在私库
+inbox/
+outbox/
+labels/
+data/
+samples/
+crops/
+compare/
+
+# 文献与图像
+*.pdf
+*.tif
+*.tiff
+*.jp2
+
+# 旧数据目录（已废弃，禁止再提交）
+csd_ias/
+csd_download/
+
+# 分享包与构建产物
+.trae-html-share-packages/
