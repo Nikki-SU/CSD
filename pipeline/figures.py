@@ -49,10 +49,14 @@ def figure_records(content_list: list[dict], page_offset: int = 0) -> list[dict]
         counters[page] = counters.get(page, 0) + 1
         caption = " ".join(item.get("image_caption") or []).strip()
         footnote = " ".join(item.get("image_footnote") or []).strip()
+        bbox = item.get("bbox") or item.get("box") or []
+        if isinstance(bbox, dict):
+            bbox = [bbox.get("x1", 0), bbox.get("y1", 0), bbox.get("x2", 0), bbox.get("y2", 0)]
         records.append(
             {
                 "figure_id": f"p{page:03d}_f{counters[page]:02d}",
                 "page": page,
+                "bbox": [int(v) for v in bbox] if len(bbox) == 4 else [],
                 "img_path": item.get("img_path", ""),
                 "caption": caption,
                 "footnote": footnote,

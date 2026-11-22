@@ -27,6 +27,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
+try:
+    from .worker import Worker
+except ImportError:  # 允许直接 python backend/server.py
+    from worker import Worker
+
 APP_VERSION = "0.5.0"
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA = ROOT / "data"
@@ -39,6 +44,7 @@ _label_lock = threading.Lock()
 _data_root = DEFAULT_DATA
 _access_code = ""
 _lan_mode = False
+_worker: Worker | None = None
 
 
 # ---------- 通用工具 ----------
@@ -345,7 +351,10 @@ class Handler(BaseHTTPRequestHandler):
         try:
             payload = self._body()
             if path == "/api/jobs":
-                return self._json(201, create_job(payload))
+                job = create_job(payload)
+                if _worker:
+                    _worker.submit(job["job_id"])
+                return self._json(201, job)
             if path == "/api/labels":
                 return self._json(200, save_labels(payload))
             if path == "/api/labels/topo":
@@ -382,12 +391,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    global _data_root, _access_code, _lan_mode
+    global _data_root, _access_code, _lan_mode, _worker
     parser = argparse.ArgumentParser(prog="csd-server")
     parser.add_argument("--host", default="")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--data-dir", default=str(DEFAULT_DATA))
     parser.add_argument("--lan", action="store_true", help="绑 0.0.0.0，生成访问码")
+    parser.add_argument("--dry-run", action="store_true", help="不调 MinerU，只跑核验与页处理")
     args = parser.parse_args()
 
     _data_root = Path(args.data_dir).resolve()
@@ -399,6 +409,10 @@ def main() -> None:
     if _lan_mode:
         _access_code = os.environ.get("CSD_ACCESS_CODE") or secrets.token_hex(4)
         print(f"[局域网] 访问码: {_access_code}（用 --lan 启动时加请求头 X-Access-Code）")
+
+    _worker = Worker(_data_root, dry_run=args.dry_run)
+    _worker.start()
+    print(f"任务执行: {'dry-run（不调 MinerU）' if _worker.dry_run else '完整处理'}")
 
     server = ThreadingHTTPServer((host, args.port), Handler)
     print(f"CSD 后端已启动: http://{host}:{args.port}")
