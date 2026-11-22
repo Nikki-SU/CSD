@@ -23,7 +23,8 @@ class Config:
 
     # 抽样口径
     target_per_cell: int = 4
-    max_attempts_per_cell: int = 5
+    # 「抽了 5 次」的“次”尚未定义（一轮抽样 / 一篇 / 一次重试），不得擅自当作 5 篇
+    max_attempts_per_cell: int | None = None
 
     # Mineru 精准解析 API
     mineru_base: str = "https://mineru.net"
