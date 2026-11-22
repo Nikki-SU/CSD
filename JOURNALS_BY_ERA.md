@@ -13,7 +13,7 @@
 3. 随机抽样必然抽到不含结构式的文章（物理有机、波谱、理论、综述），这类文章**不入格**，在同刊同年内重抽，不跨刊补。
 4. 每格目标 4 篇通过验证的文章；单格尝试上限 20 篇，用尽仍无则记**缺口**（ADR-013 的口径）。
 5. 两条核验互相独立：
-   - `verify_status`：DOI/标题/卷期页是否与声称一致（`verified` / `mismatch` / `unreadable`）。
+   - `verify_status`：按 `DATASET_WORKFLOW.md` 的纸面对照字段核验（刊名/年/卷/期/页/标题）；DOI 仅作索引主键，不要求在 PDF 内出现。
    - `has_structure`：是否检出结构式（`true` / `false` / `unknown`）。
 
 ## 二、抽样框原则
@@ -136,7 +136,7 @@
 ## 九、抽样执行规则（下一步实现）
 
 1. 每（刊族, 年）查询：`type:article`、`has_doi:true`、年份精确匹配；取前 25 条，用固定 seed 洗牌。
-2. 逐条：获取 PDF → `verify_status`（前两页 DOI + 标题相似度 + 卷期页）→ `has_structure`（提图/线稿检测）→ 通过则入格。
+2. 逐条：获取 PDF → `verify_status`（按 `DATASET_WORKFLOW.md` 对照纸面刊名/年/卷/期/页/标题）→ `has_structure`（提图/线稿检测）→ 通过则入格。
 3. 未通过：同格取下一条；单格尝试 20 条即停，记缺口。
 4. 落盘：查询 URL、检索时间、source id、seed、逐条拒绝原因、缺口表。
 5. 旧文件已整体删除；最终样本另出 `sample.csv`（只在私库）。
