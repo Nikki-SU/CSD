@@ -1,10 +1,9 @@
-# 前后端接口契约 v0.4.0
+# 前后端接口契约 v0.5.0
 
 > 角色：
 > - **公库** = `Nikki-SU/CSD`（公开）：只放代码、本契约与文档；**零数据**。
-> - **私库** = `Nikki-SU/CSDws`（私有）：只放代码、任务元数据、文本结果与缩略图；**不放 PDF、不放全尺寸图像**。
-> - **本地工作区**：放 PDF、全尺寸裁剪图与对比图；解析与匹配也在本地跑。
-> 传输层：不建 HTTP 服务。前端用 GitHub Contents API 读写私库文件；大文件导出走本地 zip。
+> - **本地后端**：唯一运行时。承载 API、任务队列、文件读写；数据目录 `data/`，人可读。
+> 传输层：本地 HTTP，默认只绑 `127.0.0.1:8765`；`--lan` 时绑 `0.0.0.0` 并校验访问码。GitHub 只做代码托管，不参与运行时。
 > 本文件是前后端唯一事实源。字段、路径、枚举以本文为准；改动按 §十三 执行。
 
 ## 零、硬约束
@@ -15,7 +14,7 @@
 4. 指标由后端 `report` 计算，前端只展示。
 5. 没有后端数据就不显示结果区，不造假、不预填。
 6. `legible=true` 的图**必须有 `query_features`**（从文献图提取的粗特征）；不得只算候选侧特征，查询侧缺值就无法初筛。
-7. 私库不存 PDF、不存全尺寸裁剪/对比图；只存文本结果与长边 ≤ 512 px 的缩略图。commit 历史永久，不把大数据写进去。
+7. 运行数据只落本地 `data/`；仓库与公库零数据。数据目录不进 git。
 
 ---
 
@@ -74,11 +73,11 @@
 ## 二、数据流
 
 ```
-① 本地 CLI 读本地目录（PDF 或图片），生成 inbox/{job}/job.json；source_ref 是本地路径
-② 本地依次跑 ingest → docverify → render → coarse → fine → chemcheck
-③ 结果写本地 outbox/{job}/；只把 doc.json、result.json、result.csv、metrics.json、labels/、thumbs/ 推到私库
-④ 前端用 Contents API 读私库结果；人审看缩略图，写回 labels/{job}.csv
-⑤ 本地把 outbox/{job}/ 打成 zip 导出；私库不承担 PDF 与大图
+① 前端 POST /api/jobs：source_type=pdf|image，source_ref=本地路径或目录
+② 本地后端写 data/inbox/{job}/job.json，后台线程排队
+③ 依次 ingest → docverify → render → coarse → fine → chemcheck，写 data/outbox/{job}/
+④ 前端轮询 GET /api/jobs/{job}；人审读 /files/ 下的缩略图，POST /api/labels 写标注
+⑤ 本地 report 算 metrics.json；GET /api/export/{job} 打 zip 导出
 ```
 
 ---
@@ -253,20 +252,28 @@ job_id,figure_id,feature,expected,detected,reviewer,reviewed_at
 
 ---
 
-## 十、GitHub Contents API 调用规范
+## 十、本地 API
 
-| 操作 | 调用 |
-|---|---|
-| 读文件 | `GET /repos/{owner}/{repo}/contents/{path}?ref={branch}`，`cache: 'no-store'` |
-| 读目录 | `GET /repos/{owner}/{repo}/contents/{dir}?ref={branch}` |
-| 写文件 | `PUT /repos/{owner}/{repo}/contents/{path}`，body 含 `message`、`content`(base64)、`branch`；已存在时带 `sha` |
-| 大文件 | 响应正文为空或 >1MB → `GET /repos/{owner}/{repo}/git/blobs/{sha}`，取 base64 |
-| 轮询 | 5000 ms × 120 次；`stage` ∈ {`done`,`failed`} 终止；页面隐藏时暂停 |
-| 写并发 | 全局串行队列；同一文件禁止并发 PUT |
-| 竞态 | `409/422` → 400/800/1600 ms 退避后重取 `sha`，最多 4 次；仅 `404` 可不带 `sha` 创建 |
-| Actions 状态 | run 退避 2s 起、×1.5、封顶 12s |
+| 方法 | 路径 | 用途 | 回环限制 |
+|---|---|---|---|
+| GET | `/api/health` | 服务存活与版本 | 否 |
+| GET | `/api/jobs` | 任务列表（分页、按状态过滤） | 否 |
+| POST | `/api/jobs` | 建任务；body 为 job.json 字段 | **是** |
+| GET | `/api/jobs/{job_id}` | 任务元数据 + `.progress.json` | 否 |
+| GET | `/api/jobs/{job_id}/result` | `result.json`；未就绪返回 404 | 否 |
+| GET | `/api/jobs/{job_id}/doc` | `doc.json`；未就绪返回 404 | 否 |
+| GET | `/api/jobs/{job_id}/metrics` | `metrics.json`；未就绪返回 404 | 否 |
+| POST | `/api/labels` | 写 `labels/{job}.csv`；按 `(figure_id, reviewer)` 覆盖 | **是** |
+| POST | `/api/labels/topo` | 写 `labels/{job}_topo.csv` | **是** |
+| GET | `/files/{job_id}/{path}` | 读 outbox 内的缩略图等静态文件 | 否 |
+| GET | `/api/export/{job_id}` | 打包该 job 的 outbox 为 zip | **是** |
+| DELETE | `/api/jobs/{job_id}` | 删任务；需二次确认参数 `confirm=true` | **是** |
 
-鉴权：fine-grained PAT，存 IndexedDB；权限 `Contents: Read and write`，一键安装另需 `Workflows: Read and write`。公库内不得出现任何 token。
+- 回环限制：客户端不是 `127.0.0.1` / `::1` 时返回 403。`--lan` 模式下只读接口仍放行，写接口一律拒绝。
+- 鉴权：`--lan` 时要求请求头 `X-Access-Code`，与启动时生成的访问码一致；默认回环模式不校验。
+- 静态托管：`/` 返回前端构建产物；`/assets/*` 原样返回。找不到构建产物时返回一句可读提示，不回退到 404 空白页。
+- 轮询：5000 ms × 120 次；`stage` 为 `done` / `failed` 终止；页面隐藏时暂停。
+- 写并发：同一 job 的 labels 写入串行；整文件重写前先取当前版本，失败重试最多 4 次。
 
 ---
 
@@ -274,13 +281,14 @@ job_id,figure_id,feature,expected,detected,reviewer,reviewed_at
 
 ### P0（先做，缺一不可）
 
-1. **连接设置** `/settings`
-   - 输入 PAT、owner、repo、branch；测试连接；保存到 IndexedDB。
-   - 显示权限自检结果；失败给可读原因。
+1. **服务连接** `/settings`
+   - 默认 `http://127.0.0.1:8765`；局域网模式填 `http://<主机IP>:8765` 与访问码。
+   - 「测试连接」调 `/api/health`；失败给可读原因（服务未启动 / 访问码错误）。
+   - 地址与访问码存 localStorage，不存任何 PAT。
 2. **新建任务** `/new`
-   - 拖放 PDF（多选时一文件一 job，串行提交）或输入 DOI。
+   - 拖放 PDF 或选择本地目录（PDF 任务一文件一 job；图片任务整目录一 job，串行提交）。
    - 选择 `style_profile`；显示 `max_candidates=3` 只读。
-   - 提交写 `source.pdf` + `job.json`；乐观插入任务卡，失败回滚并报错。
+   - 提交到 `POST /api/jobs`；乐观插入任务卡，失败回滚并报错。
    - 校验：文件类型 PDF、单文件 ≤ 100 MB、DOI 格式。
 3. **任务列表** `/`
    - 卡片或表格：`job_id`、创建时间、来源、状态、进度、run 链接。
@@ -342,6 +350,7 @@ job_id,figure_id,feature,expected,detected,reviewer,reviewed_at
 
 | 版本 | 变更 |
 |---|---|
+| v0.5.0 | 运行时改为本地后端：取消私库与 GitHub Contents API，新增 §十 本地 API 与回环/访问码规则；数据只落本地 `data/`；前端 `/settings` 改为服务地址与访问码；`job.json` 的 `source_ref` 为本地路径 |
 | v0.4.0 | 存储分工改为「本地处理、私库只存文本与缩略图」：`result.json` 新增 `thumb_path`（私库内，前端唯一可读图），`crop_path/compare_path` 明确为本地路径；`result.csv` 末尾追加 `thumb_path`；新增 `labels/{job}_topo.csv` 与 `metrics.topo` 口径；PDF 与大图不进私库；`schema` 升为 2 |
 | v0.3.1 | 补上文献图侧粗特征：`result.json` 增加图级 `query_features`，`result.csv` 追加 `query_edges/query_rings/query_ring_sizes/query_labels`；§零 明确 `legible=true` 时查询侧特征必填 |
 | v0.3.0 | 重写：新增命名规范、UI 功能清单、零数据红线；统一 `figure_id`；新增 `doc.json` 与 `verify_status`；候选去 SMILES/InChIKey；`labels` 明确三种 verdict；明确大文件与写并发处理 |
