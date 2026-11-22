@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 from .article import process_article
+from .cell import run_cell
 from .config import Config
 from .sample import parse_journals, sample_cell, write_rows
 
@@ -63,6 +64,26 @@ def _cmd_article(args: argparse.Namespace) -> int:
     return 2
 
 
+def _cmd_cell(args: argparse.Namespace) -> int:
+    config = Config.from_env()
+    cells = [c for c in parse_journals() if c.active_in(args.year)]
+    if args.journal:
+        cells = [c for c in cells if args.journal.lower() in c.journal.lower()]
+    if args.era:
+        cells = [c for c in cells if c.era == args.era]
+    if not cells:
+        print("没有匹配的刊物/年份，检查 JOURNALS_BY_ERA.md 的有效年段。", file=sys.stderr)
+        return 1
+    out = Path(args.out) if args.out else config.workdir / "cells"
+    for cell in cells:
+        summary = run_cell(cell, args.year, args.pdf_dir, out, config=config)
+        print(
+            f"{cell.journal} {args.year}: accepted {summary['accepted']}/{summary['target']} "
+            f"in {summary['rounds']} round(s), captionless_mode={summary['captionless_mode']}"
+        )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -83,6 +104,14 @@ def main(argv: list[str] | None = None) -> int:
     article.add_argument("--all-pages", action="store_true", help="整篇送 Mineru，不做图注页预筛")
     article.add_argument("--reuse", action="store_true", help="复用 out/mineru 下已有解析结果，不重新调用 API")
     article.set_defaults(func=_cmd_article)
+
+    cell = sub.add_parser("cell", help="按格子跑轮次：每轮 20 篇、最多 5 轮、目标 5 篇")
+    cell.add_argument("--year", type=int, required=True)
+    cell.add_argument("--pdf-dir", required=True, help="本地 PDF 目录，文件名含 DOI 的 slug")
+    cell.add_argument("--journal", help="刊名子串过滤")
+    cell.add_argument("--era", help="如 1970s")
+    cell.add_argument("--out")
+    cell.set_defaults(func=_cmd_cell)
 
     args = parser.parse_args(argv)
     return args.func(args)

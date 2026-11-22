@@ -48,6 +48,38 @@ def find_caption_pages(pdf_path: str | Path) -> list[int]:
     return hits
 
 
+def caption_lines(pdf_path: str | Path) -> list[dict]:
+    """逐行抓图注，返回 [{page, text}]。没有文本层就返回空列表。"""
+    lines: list[dict] = []
+    with pymupdf.open(str(pdf_path)) as doc:
+        for index, page in enumerate(doc, start=1):
+            for line in page.get_text("text").splitlines():
+                line = line.strip()
+                if line and CAPTION_RE.match(line):
+                    lines.append({"page": index, "text": line})
+    return lines
+
+
+def has_figure_blocks(pdf_path: str | Path) -> bool:
+    """电子版 PDF 里有没有「图区块」：非整页的嵌入图或矢量图形。"""
+    with pymupdf.open(str(pdf_path)) as doc:
+        for page in doc:
+            area = page.rect.width * page.rect.height
+            if area <= 0:
+                continue
+            for image in page.get_images(full=True):
+                for rect in page.get_image_rects(image[0]):
+                    ratio = rect.width * rect.height / area
+                    if 0.001 < ratio < 0.85 and rect.width > 40 and rect.height > 40:
+                        return True
+            for drawing in page.get_drawings():
+                rect = drawing["rect"]
+                ratio = rect.width * rect.height / area
+                if 0.001 < ratio < 0.5 and rect.width > 40 and rect.height > 20:
+                    return True
+    return False
+
+
 def render_page(pdf_path: str | Path, page_no: int, out_path: str | Path, dpi: int = 200) -> Path:
     """把整页按 dpi 渲染成 PNG。page_no 从 1 起。"""
     out_path = Path(out_path)

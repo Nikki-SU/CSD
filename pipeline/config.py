@@ -25,6 +25,8 @@ class Config:
     target_per_cell: int = 5
     pool_per_round: int = 20
     max_rounds_per_cell: int = 5
+    # 每格单独统计：有图但无图注的占比超过该阈值，就必须处理这类文章
+    captionless_threshold: float = 0.20
 
     # Mineru 精准解析 API
     mineru_base: str = "https://mineru.net"
