@@ -21,6 +21,42 @@ JOURNALS_MD = ROOT / "JOURNALS_BY_ERA.md"
 SECTION_RE = re.compile(r"^##\s*[一二三四五六七八九十]+、\s*(\d{4})s")
 SOURCE_RE = re.compile(r"S\d{6,}")
 
+ORGANIC_SUBFIELD = "Organic Chemistry"
+
+# 明显非有机的标题特征：物性、晶体、谱学理论等
+NON_ORGANIC_TITLE = re.compile(
+    r"conduct|superconduct|magnet|dielectric|ferroelectr|semiconduct|band[ -]gap|"
+    r"photovoltaic|luminesc|crystal structure|x-ray|neutron diffraction|"
+    r"density functional|ab initio|quantum chemical|thermodynamic|"
+    r"electrochem|polarograph|voltammetr|surface tension|viscosity|"
+    r"refractive index|phase transition|specific heat|calorimetr",
+    re.I,
+)
+ORGANIC_TITLE_HINT = re.compile(
+    r"synthes|prepar|reaction|derivat|compound|ester|amide|amine|alcohol|"
+    r"ketone|aldehyde|ether|halide|cycli|condensat|rearrang|stereochem|"
+    r"alkyl|aryl|heterocycl|oxidation|reduction|catalys",
+    re.I,
+)
+
+
+def is_organic_work(work: dict) -> bool:
+    """用 OpenAlex 学科标签 + 标题特征挡掉明显非有机的文章。
+
+    topics 按相关度排序，要求第一标签就是有机化学，避免把「材料化学 + 有机」
+    这类混挂文章当成有机论文。
+    """
+    topics = work.get("topics") or []
+    if not topics:
+        return False
+    primary = (topics[0].get("subfield") or {}).get("display_name")
+    if primary != ORGANIC_SUBFIELD:
+        return False
+    title = work.get("title") or ""
+    if NON_ORGANIC_TITLE.search(title) and not ORGANIC_TITLE_HINT.search(title):
+        return False
+    return True
+
 
 @dataclass(frozen=True)
 class JournalCell:
@@ -84,7 +120,7 @@ def openalex_works(
             f"publication_year:{year},type:article,has_doi:true"
         ),
         "per-page": per_page,
-        "select": "id,doi,title,publication_year,best_oa_location",
+        "select": "id,doi,title,publication_year,best_oa_location,topics",
     }
     if mailto:
         params["mailto"] = mailto
@@ -99,15 +135,20 @@ def sample_cell(
     limit: int = 20,
     config: Config | None = None,
     seed_suffix: str = "",
+    organic_only: bool = True,
+    pool_size: int | None = None,
 ) -> list[dict]:
     config = config or Config.from_env()
+    pool = min(pool_size or max(limit * 6, 60), 200)
     works = openalex_works(
-        cell.source_id, year, per_page=limit, mailto=config.openalex_mailto, timeout=config.timeout
+        cell.source_id, year, per_page=pool, mailto=config.openalex_mailto, timeout=config.timeout
     )
+    if organic_only:
+        works = [w for w in works if is_organic_work(w)]
     seed = f"{cell.source_id}:{year}" + (f":{seed_suffix}" if seed_suffix else "")
     random.Random(seed).shuffle(works)
     rows = []
-    for position, work in enumerate(works, start=1):
+    for position, work in enumerate(works[:limit], start=1):
         oa = work.get("best_oa_location") or {}
         rows.append(
             {
