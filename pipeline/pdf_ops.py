@@ -73,13 +73,46 @@ def render_pages(
     return rendered
 
 
-def select_pages(pdf_path: str | Path, title_pages: int = 2) -> tuple[list[int], str]:
+def is_scanned(pdf_path: str | Path, ratio: float = 0.85) -> bool:
+    """判断是不是整页扫描件：多数页面被一张大图覆盖。
+
+    扫描件里「每页都是一张图」，拿图像对象数判断「有没有图」没有意义；
+    图注也可能缺失，所以这类文档默认整篇送解析，避免漏掉无图注的结构式。
+    """
+    with pymupdf.open(str(pdf_path)) as doc:
+        if doc.page_count == 0:
+            return False
+        covered = 0
+        for page in doc:
+            area = page.rect.width * page.rect.height
+            if area <= 0:
+                continue
+            for block in page.get_text("dict")["blocks"]:
+                if block.get("type") != 1:
+                    continue
+                bbox = block["bbox"]
+                block_area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+                if block_area / area >= ratio:
+                    covered += 1
+                    break
+        return covered >= max(1, int(doc.page_count * 0.8))
+
+
+def select_pages(
+    pdf_path: str | Path, title_pages: int = 2, force_all: bool = False
+) -> tuple[list[int], str]:
     """返回要送 Mineru 的页码与选择方式。
 
+    - force_all：整篇都送。
+    - 扫描件：整篇都送（图注不可靠，不能预筛）。
     - 文本层能定位图注：只送首页（核标题）+ 有图注的页。
     - 定位不到：无法预筛，整篇都送。
     """
     total = page_count(pdf_path)
+    if force_all:
+        return list(range(1, total + 1)), "all_pages"
+    if is_scanned(pdf_path):
+        return list(range(1, total + 1)), "scanned_all"
     caption_pages = find_caption_pages(pdf_path)
     if caption_pages:
         pages = sorted(set(range(1, min(title_pages, total) + 1)) | set(caption_pages))

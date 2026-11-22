@@ -120,10 +120,27 @@ class MineruClient:
                     f"解析失败 {item.get('file_name')}：{item.get('err_msg') or item.get('state')}"
                 )
             target = out_dir / data_id
-            if not (target / "content_list.json").exists():
+            if not self._find_output_root(target):
                 self._download_zip(item["full_zip_url"], target)
-            mapping[data_id] = target
+            root = self._find_output_root(target)
+            if root is None:
+                raise MineruError(f"解析结果缺少 content_list.json：{item.get('file_name')}")
+            mapping[data_id] = root
         return mapping
+
+    @staticmethod
+    def _find_output_root(directory: Path) -> Path | None:
+        """Mineru 的输出文件可能带 UUID 前缀，且 zip 可能多套一层目录。"""
+        direct = directory / "content_list.json"
+        if direct.exists():
+            return directory
+        if not directory.exists():
+            return None
+        for candidate in sorted(directory.rglob("*_content_list.json")):
+            if candidate.name.endswith("_content_list_v2.json"):
+                continue
+            return candidate.parent
+        return None
 
     def _download_zip(self, url: str, target: Path) -> None:
         resp = requests.get(url, timeout=max(self.timeout, 300))

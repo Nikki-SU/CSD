@@ -23,6 +23,8 @@ def process_article(
     out_dir: str | Path,
     config: Config | None = None,
     dry_run: bool = False,
+    all_pages: bool = False,
+    reuse_mineru: bool = False,
 ) -> ArticleResult:
     config = config or Config.from_env()
     pdf_path = Path(pdf_path)
@@ -33,7 +35,7 @@ def process_article(
     meta = crossref_metadata(doi, mailto=config.crossref_mailto, timeout=config.timeout)
     result.title_claim = meta["title"]
 
-    pages, mode = pdf_ops.select_pages(pdf_path)
+    pages, mode = pdf_ops.select_pages(pdf_path, force_all=all_pages)
     result.pages_with_figures = pages
 
     rendered = pdf_ops.render_pages(pdf_path, pages, out_dir / "pages", dpi=config.dpi)
@@ -52,16 +54,24 @@ def process_article(
 
     from .mineru import MineruClient
 
-    client = MineruClient(config)
-    data_ids = [f"p{page:03d}" for page in pages]
-    parsed = client.parse_files(
-        [rendered[page] for page in pages], data_ids=data_ids, out_dir=out_dir / "mineru"
-    )
+    if reuse_mineru:
+        parsed = {}
+        for page in pages:
+            root = out_dir / "mineru" / f"p{page:03d}"
+            found = MineruClient._find_output_root(root)
+            if found:
+                parsed[f"p{page:03d}"] = found
+    else:
+        client = MineruClient(config)
+        data_ids = [f"p{page:03d}" for page in pages]
+        parsed = client.parse_files(
+            [rendered[page] for page in pages], data_ids=data_ids, out_dir=out_dir / "mineru"
+        )
 
     title_text = "\n\n".join(
-        _read_markdown(parsed[data_ids[i]])
-        for i, page in enumerate(pages)
-        if page <= 2 and data_ids[i] in parsed
+        _read_markdown(parsed[f"p{page:03d}"])
+        for page in pages
+        if page <= 2 and f"p{page:03d}" in parsed
     )
     _apply_verify(result, title_text, config)
 
@@ -74,12 +84,18 @@ def process_article(
         content = figures_mod.load_content_list(base)
         for record in figures_mod.figure_records(content, page_offset=page - 1):
             verdict = figures_mod.judge_caption(record["caption"], judge)
-            record.update(verdict)
+            record["has_structure"] = verdict["has_structure"]
+            record["judge_method"] = verdict["method"]
+            record["judge_reason"] = verdict["reason"]
             if record["has_structure"] is True:
                 saved = figures_mod.save_figure(base, record, out_dir / "figures")
                 record["saved_path"] = str(saved) if saved else ""
                 if saved:
                     result.structures.append(str(saved))
+            elif record["has_structure"] is None:
+                # 未判定不等于没结构：存到 review/ 交人工复核，不硬判
+                saved = figures_mod.save_figure(base, record, out_dir / "review")
+                record["saved_path"] = str(saved) if saved else ""
             records.append(record)
     result.figures = records
 
@@ -89,11 +105,14 @@ def process_article(
     elif not records:
         result.outcome = "rejected"
         result.reject_reason = "no_figures"
-    elif not result.structures:
+    elif result.structures:
+        result.outcome = "accepted"
+    elif any(record["has_structure"] is None for record in records):
+        result.outcome = "needs_review"
+        result.reject_reason = "no_structure_confirmed"
+    else:
         result.outcome = "rejected"
         result.reject_reason = "no_structure"
-    else:
-        result.outcome = "accepted"
 
     _write_outputs(out_dir, result, meta, mode)
     return result

@@ -18,15 +18,28 @@ from .llm import SemanticJudge
 
 
 def load_content_list(mineru_dir: str | Path) -> list[dict]:
-    path = Path(mineru_dir) / "content_list.json"
+    """Mineru 的输出名可能带 UUID 前缀，如 {uuid}_content_list.json。"""
+    directory = Path(mineru_dir)
+    path = directory / "content_list.json"
     if not path.exists():
-        return []
+        candidates = [
+            p
+            for p in sorted(directory.glob("*_content_list.json"))
+            if not p.name.endswith("_content_list_v2.json")
+        ]
+        if not candidates:
+            return []
+        path = candidates[0]
     data = json.loads(path.read_text(encoding="utf-8"))
     return data if isinstance(data, list) else []
 
 
 def figure_records(content_list: list[dict], page_offset: int = 0) -> list[dict]:
-    """按阅读顺序给每张图编号：p{页:03d}_f{页内序号:02d}。"""
+    """按阅读顺序给每张图编号：p{页:03d}_f{页内序号:02d}。
+
+    只收 Mineru 判为 image 的区块。实测：结构图/反应式多为 image，折线图多为
+    chart，表格为 table；后两者不进候选。
+    """
     counters: dict[int, int] = {}
     records: list[dict] = []
     for item in content_list:
@@ -98,7 +111,9 @@ def judge_caption(caption: str, judge: SemanticJudge) -> dict:
                 "reason": str(result.get("reason") or ""),
             }
 
-    # 无模型时不做确定性判定：只把明显是谱图/曲线的排掉，其余标 unknown 待复核
+    # 无模型时的兜底：只认最明确的信号，其余标 unknown 待复核
+    if re.match(r"^\s*scheme\b", caption, re.IGNORECASE):
+        return {"has_structure": True, "method": "keyword_fallback", "reason": "图注以 SCHEME 开头"}
     if _NON_STRUCTURE_WORDS.search(caption) and not _SCHEME_WORDS.search(caption):
         return {"has_structure": False, "method": "keyword_fallback", "reason": "图注指向谱图/曲线/装置"}
     return {"has_structure": None, "method": "unknown", "reason": "无语义判定模型，待人工复核"}

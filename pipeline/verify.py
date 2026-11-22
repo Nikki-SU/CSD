@@ -33,7 +33,9 @@ def crossref_metadata(doi: str, mailto: str | None = None, timeout: int = 60) ->
     )
     resp.raise_for_status()
     message = resp.json()["message"]
-    title = " ".join(message.get("title") or []).strip()
+    title = " ".join(message.get("title") or [])
+    title = re.sub(r"<[^>]+>", "", title)  # Crossref 标题里会带 <scp> 等标记
+    title = " ".join(title.split())
     year = None
     for key in ("published-print", "published-online", "issued"):
         parts = (message.get(key) or {}).get("date-parts") or []

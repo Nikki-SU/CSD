@@ -42,13 +42,25 @@ def _cmd_sample(args: argparse.Namespace) -> int:
 def _cmd_article(args: argparse.Namespace) -> int:
     config = Config.from_env()
     out = Path(args.out) if args.out else config.workdir / "articles" / Path(args.pdf).stem
-    result = process_article(args.pdf, args.doi, out, config=config, dry_run=args.dry_run)
+    result = process_article(
+        args.pdf,
+        args.doi,
+        out,
+        config=config,
+        dry_run=args.dry_run,
+        all_pages=args.all_pages,
+        reuse_mineru=args.reuse,
+    )
     print(f"标题核验: {result.verify_status} ({result.verify_method}, sim={result.title_sim})")
     print(f"选页: {result.pages_with_figures}")
     print(f"结构式图: {len(result.structures)}")
     print(f"结论: {result.outcome} / {result.reject_reason}")
     print(f"输出目录: {out}")
-    return 0 if result.outcome == "accepted" else 2
+    if result.outcome == "accepted":
+        return 0
+    if result.outcome == "needs_review":
+        return 3
+    return 2
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -68,6 +80,8 @@ def main(argv: list[str] | None = None) -> int:
     article.add_argument("--doi", required=True)
     article.add_argument("--out")
     article.add_argument("--dry-run", action="store_true", help="不调 Mineru，只做取页与标题核验")
+    article.add_argument("--all-pages", action="store_true", help="整篇送 Mineru，不做图注页预筛")
+    article.add_argument("--reuse", action="store_true", help="复用 out/mineru 下已有解析结果，不重新调用 API")
     article.set_defaults(func=_cmd_article)
 
     args = parser.parse_args(argv)

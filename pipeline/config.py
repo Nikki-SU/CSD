@@ -71,5 +71,5 @@ class ArticleResult:
     pages_with_figures: list[int] = field(default_factory=list)
     figures: list[dict] = field(default_factory=list)
     structures: list[str] = field(default_factory=list)
-    outcome: str = "rejected"  # accepted | rejected
-    reject_reason: str = ""  # no_figures | no_structure | mismatch | unreadable | error
+    outcome: str = "rejected"  # accepted | needs_review | rejected
+    reject_reason: str = ""  # no_figures | no_structure | no_structure_confirmed | mismatch | unreadable | error
