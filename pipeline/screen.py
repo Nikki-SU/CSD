@@ -102,10 +102,9 @@ def screen_article(
             kinds = [classify_caption(c["text"]) for c in non_empty]
             if "structure" in kinds:
                 structure, captionless, status = True, False, "structure"
-            elif all(k == "non_structure" for k in kinds):
-                structure, captionless, status = False, False, "non_structure"
             else:
-                structure, captionless, status = None, False, "ambiguous_caption"
+                # 图注没能证明是结构式，就不算结构式；不设「不确定」
+                structure, captionless, status = False, False, "non_structure"
         else:
             structure, captionless, status = None, True, "captionless"
 

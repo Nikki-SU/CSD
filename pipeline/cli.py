@@ -79,7 +79,8 @@ def _cmd_cell(args: argparse.Namespace) -> int:
         summary = run_cell(cell, args.year, args.pdf_dir, out, config=config)
         print(
             f"{cell.journal} {args.year}: accepted {summary['accepted']}/{summary['target']} "
-            f"in {summary['rounds']} round(s), captionless_mode={summary['captionless_mode']}"
+            f"in {summary['rounds']} round(s), captionless={summary['captionless_rate']:.0%}"
+            f"{' [ALARM]' if summary['alarm'] else ''}"
         )
     return 0
 

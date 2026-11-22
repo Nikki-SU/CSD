@@ -74,7 +74,10 @@ def run_cell(
     records: list[dict] = []
     accepted: list[dict] = []
     rounds_done = 0
-    captionless_mode = False
+    alarm = False
+    captionless_rate = 0.0
+    figure_count = 0
+    captionless_count = 0
 
     for round_no in range(1, config.max_rounds_per_cell + 1):
         rows = sample_fn(cell, year, limit=config.pool_per_round, config=config)
@@ -103,14 +106,20 @@ def run_cell(
 
         figure_articles = [r for r in records if r.get("has_figures")]
         captionless_articles = [r for r in figure_articles if r.get("captionless")]
-        rate = len(captionless_articles) / len(figure_articles) if figure_articles else 0.0
-        if rate > config.captionless_threshold and not captionless_mode:
-            captionless_mode = True
+        figure_count = len(figure_articles)
+        captionless_count = len(captionless_articles)
+        captionless_rate = captionless_count / figure_count if figure_count else 0.0
+
+        # 目标已满就先收工；此时无图注占比不影响这一格
+        if len(accepted) >= config.target_per_cell:
+            break
+
+        # 20% 是报警线：达到就停这一格，交人类决定，不自动处理
+        if captionless_rate >= config.captionless_threshold:
+            alarm = True
             for record in records:
                 if record["outcome"] == "skipped_captionless":
-                    record["outcome"] = "needs_review"
-
-        if len(accepted) >= config.target_per_cell:
+                    record["outcome"] = "pending_human"
             break
 
     summary = {
@@ -120,7 +129,11 @@ def run_cell(
         "rounds": rounds_done,
         "accepted": len(accepted),
         "target": config.target_per_cell,
-        "captionless_mode": captionless_mode,
+        "alarm": alarm,
+        "captionless_rate": round(captionless_rate, 4),
+        "captionless_threshold": config.captionless_threshold,
+        "figure_articles": figure_count,
+        "captionless_articles": captionless_count,
         "records": records,
     }
     _write_cell(out_dir, cell, year, records, summary)
@@ -141,7 +154,29 @@ def _write_cell(out_dir: Path, cell: JournalCell, year: int, records: list[dict]
             row["figure_pages"] = "|".join(str(p) for p in row.get("figure_pages") or [])
             writer.writerow(row)
 
-    if summary["accepted"] < summary["target"]:
+    if summary.get("alarm"):
+        alarm_path = out_dir / f"{year}_{cell.source_id}.alarm.md"
+        lines = [
+            "# 无图注报警",
+            "",
+            f"- 格子：{cell.journal} / {year} / `{cell.source_id}`",
+            f"- 有图文章：{summary['figure_articles']}",
+            f"- 无图注文章：{summary['captionless_articles']}",
+            f"- 比例：{summary['captionless_rate']:.2%}",
+            f"- 阈值：{summary['captionless_threshold']:.0%}",
+            "",
+            "已停止该格，等人类决定怎么处理无图注的图；不得自动纳入或作废。",
+            "",
+            "| DOI | 页码 |",
+            "|---|---|",
+        ]
+        for record in records:
+            if record.get("captionless"):
+                pages = "|".join(str(p) for p in record.get("figure_pages") or [])
+                lines.append(f"| {record['doi']} | {pages} |")
+        alarm_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        summary["alarm_path"] = str(alarm_path)
+    elif summary["accepted"] < summary["target"]:
         gaps_path = out_dir / "gaps.csv"
         exists = gaps_path.exists()
         with gaps_path.open("a", encoding="utf-8-sig", newline="") as handle:

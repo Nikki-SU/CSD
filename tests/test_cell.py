@@ -96,7 +96,7 @@ class TestCellLoop(unittest.TestCase):
             self.assertEqual(summary["rounds"], 5)
             self.assertTrue((out / "gaps.csv").exists())
 
-    def test_captionless_over_threshold_goes_to_review(self):
+    def test_captionless_at_threshold_stops_and_alarms(self):
         with tempfile.TemporaryDirectory() as tmp:
             pdf_dir = Path(tmp) / "pdfs"
             rows = []
@@ -113,14 +113,17 @@ class TestCellLoop(unittest.TestCase):
                     return _result(doi, structure=None, captionless=True, status="captionless")
                 return _result(doi, has_figures=False, structure=False, status="no_figures")
 
+            out = Path(tmp) / "out"
             summary = run_cell(
-                CELL, 1970, pdf_dir, Path(tmp) / "out", Config(),
+                CELL, 1970, pdf_dir, out, Config(),
                 sample_fn=sample_fn, screen_fn=screen_fn,
             )
             outcomes = [r["outcome"] for r in summary["records"]]
-            self.assertIn("needs_review", outcomes)
+            self.assertTrue(summary["alarm"])
+            self.assertIn("pending_human", outcomes)
             self.assertNotIn("skipped_captionless", outcomes)
-            self.assertTrue(summary["captionless_mode"])
+            self.assertEqual(summary["accepted"], 0)
+            self.assertTrue((out / f"1970_{CELL.source_id}.alarm.md").exists())
 
     def test_captionless_under_threshold_stays_skipped(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -137,7 +140,7 @@ class TestCellLoop(unittest.TestCase):
             def screen_fn(pdf, doi, out, config):
                 if int(doi.rsplit("c", 1)[1]) < 3:
                     return _result(doi, structure=None, captionless=True, status="captionless")
-                return _result(doi, structure=None, status="ambiguous_caption")
+                return _result(doi, structure=False, status="non_structure")
 
             summary = run_cell(
                 CELL, 1970, pdf_dir, Path(tmp) / "out", Config(),
@@ -145,7 +148,7 @@ class TestCellLoop(unittest.TestCase):
             )
             outcomes = [r["outcome"] for r in summary["records"]]
             self.assertIn("skipped_captionless", outcomes)
-            self.assertFalse(summary["captionless_mode"])
+            self.assertFalse(summary["alarm"])
 
 
 if __name__ == "__main__":
