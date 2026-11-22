@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     sample.add_argument("--year", type=int, required=True)
     sample.add_argument("--era", help="如 1970s；不填则不限")
     sample.add_argument("--journal", help="刊名子串过滤，如 J. Org. Chem.")
-    sample.add_argument("--limit", type=int, default=25)
+    sample.add_argument("--limit", type=int, default=20)
     sample.add_argument("--out")
     sample.set_defaults(func=_cmd_sample)
 

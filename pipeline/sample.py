@@ -74,7 +74,7 @@ def parse_journals(path: str | Path = JOURNALS_MD) -> list[JournalCell]:
 def openalex_works(
     source_id: str,
     year: int,
-    per_page: int = 25,
+    per_page: int = 20,
     mailto: str | None = None,
     timeout: int = 60,
 ) -> list[dict]:
@@ -93,7 +93,7 @@ def openalex_works(
     return resp.json().get("results") or []
 
 
-def sample_cell(cell: JournalCell, year: int, limit: int = 25, config: Config | None = None) -> list[dict]:
+def sample_cell(cell: JournalCell, year: int, limit: int = 20, config: Config | None = None) -> list[dict]:
     config = config or Config.from_env()
     works = openalex_works(
         cell.source_id, year, per_page=limit, mailto=config.openalex_mailto, timeout=config.timeout

@@ -21,10 +21,10 @@ class Config:
     workdir: Path = Path(".private/work")
     dpi: int = 200
 
-    # 抽样口径
+    # 抽样口径：每轮抽 20 篇，最多 5 轮；每格目标 4 篇
     target_per_cell: int = 4
-    # 「抽了 5 次」的“次”尚未定义（一轮抽样 / 一篇 / 一次重试），不得擅自当作 5 篇
-    max_attempts_per_cell: int | None = None
+    pool_per_round: int = 20
+    max_rounds_per_cell: int = 5
 
     # Mineru 精准解析 API
     mineru_base: str = "https://mineru.net"
