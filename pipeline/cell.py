@@ -167,6 +167,7 @@ def _write_cell(out_dir: Path, cell: JournalCell, year: int, records: list[dict]
             f"- 比例：{summary['captionless_rate']:.2%}",
             f"- 阈值：{summary['captionless_threshold']:.0%}",
             "",
+            "无图注文章占比达到报警线。继续剔除会让数据集系统性缺失这类刊物/年代的样本。",
             "已停止该格，等人类决定怎么处理无图注的图；不得自动纳入或作废。",
             "",
             "| DOI | 页码 |",
