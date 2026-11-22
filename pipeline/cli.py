@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 from .article import process_article
+from .acquire import acquire_cell
 from .cell import run_cell
 from .config import Config
 from .sample import parse_journals, sample_cell, write_rows
@@ -64,6 +65,33 @@ def _cmd_article(args: argparse.Namespace) -> int:
     return 2
 
 
+def _cmd_acquire(args: argparse.Namespace) -> int:
+    config = Config.from_env()
+    cells = [c for c in parse_journals() if c.active_in(args.year)]
+    if args.journal:
+        cells = [c for c in cells if args.journal.lower() in c.journal.lower()]
+    if args.era:
+        cells = [c for c in cells if c.era == args.era]
+    if not cells:
+        print("没有匹配的刊物/年份，检查 JOURNALS_BY_ERA.md 的有效年段。", file=sys.stderr)
+        return 1
+    out = Path(args.out) if args.out else config.workdir / "acquire"
+    for cell in cells:
+        summary = acquire_cell(
+            cell, args.year, args.pdf_dir, out, config=config,
+            limit=args.limit, seed_suffix=args.seed,
+        )
+        print(
+            f"{cell.journal} {args.year}: 抽样 {summary['sampled']}，"
+            f"下载 {summary['downloaded']}，已有 {summary['already_have']}，"
+            f"待人工 {summary['pending']}"
+        )
+        print(f"  明细: {summary['acquire_path']}")
+        if summary["pending"]:
+            print(f"  清单: {summary['manual_path']}")
+    return 0
+
+
 def _cmd_cell(args: argparse.Namespace) -> int:
     config = Config.from_env()
     cells = [c for c in parse_journals() if c.active_in(args.year)]
@@ -76,6 +104,12 @@ def _cmd_cell(args: argparse.Namespace) -> int:
         return 1
     out = Path(args.out) if args.out else config.workdir / "cells"
     for cell in cells:
+        if args.acquire:
+            summary = acquire_cell(cell, args.year, args.pdf_dir, out, config=config)
+            print(
+                f"{cell.journal} {args.year} 取全文: 下载 {summary['downloaded']}，"
+                f"待人工 {summary['pending']}"
+            )
         summary = run_cell(cell, args.year, args.pdf_dir, out, config=config)
         print(
             f"{cell.journal} {args.year}: accepted {summary['accepted']}/{summary['target']} "
@@ -112,7 +146,18 @@ def main(argv: list[str] | None = None) -> int:
     cell.add_argument("--journal", help="刊名子串过滤")
     cell.add_argument("--era", help="如 1970s")
     cell.add_argument("--out")
+    cell.add_argument("--acquire", action="store_true", help="先自动取一轮全文，再进入逐篇筛查")
     cell.set_defaults(func=_cmd_cell)
+
+    acquire = sub.add_parser("acquire", help="自动取全文；取不到的写待人工清单")
+    acquire.add_argument("--year", type=int, required=True)
+    acquire.add_argument("--pdf-dir", required=True)
+    acquire.add_argument("--journal", help="刊名子串过滤")
+    acquire.add_argument("--era", help="如 1970s")
+    acquire.add_argument("--limit", type=int, default=20)
+    acquire.add_argument("--seed", default="", help="抽样种子后缀，换一批候选时改这里")
+    acquire.add_argument("--out")
+    acquire.set_defaults(func=_cmd_acquire)
 
     args = parser.parse_args(argv)
     return args.func(args)

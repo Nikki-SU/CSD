@@ -41,6 +41,8 @@ class Config:
     # 元数据 API 礼貌标识
     crossref_mailto: str | None = None
     openalex_mailto: str | None = None
+    # OA 解析（Unpaywall/OpenAlex）要求的联系邮箱；没有就跳过该源
+    oa_mailto: str | None = None
 
     timeout: int = 60
 
@@ -56,6 +58,7 @@ class Config:
             judge_model=_env("CSD_JUDGE_MODEL", "OPENAI_MODEL"),
             crossref_mailto=_env("CROSSREF_MAILTO"),
             openalex_mailto=_env("OPENALEX_MAILTO"),
+            oa_mailto=_env("OA_MAILTO", "CROSSREF_MAILTO", "OPENALEX_MAILTO"),
         )
 
 
