@@ -9,7 +9,7 @@
 - 数据集：裁剪图、标注、真值
 - 模型权重：当前未使用任何训练权重，恒为 0
 
-当前版本：**v0.5.6.0**（后端 0 / 前端 5 / 数据集 6 / 模型权重 0）
+当前版本：**v0.5.7.0**（后端 0 / 前端 5 / 数据集 7 / 模型权重 0）
 
 ---
 
@@ -18,6 +18,7 @@
 - 公库：`Nikki-SU/CSD`（公开，Pages）。
 - 私库：`Nikki-SU/CSDws`（私有，数据集 + 后端）。`csd-workspace` 曾是我的占位默认名，已作废。
 - 密钥只从环境变量读，不进任何仓库。
+- **文献图必须提取粗特征**（`edges` / `rings` / `ring_sizes` / `labels`），与候选侧同构，作为初筛的查询侧输入；不得只从候选端算拓扑。
 
 ---
 
@@ -213,6 +214,7 @@
 | `image_path` | str | 裁剪图相对路径 |
 | `legible` | bool | 人/机器初判是否可辨 |
 | `has_structure` | bool | 是否检出至少 1 个结构式 |
+| `features` | obj | 从**文献图**提取的粗特征：`edges` / `rings` / `ring_sizes` / `labels`；初筛左侧，`legible=true` 时必填 |
 | `year` | int | 文献年份 |
 | `journal` | str | 刊名 |
 | `style_profile` | str | 风格档位，如 `default_1970s` |
@@ -269,7 +271,8 @@
 | 函数 | 输入 → 输出 | 说明 |
 |---|---|---|
 | `render_mol(smiles, style, size, seed) → png` | SMILES → 图像路径 | 固定 seed 保证可复现 |
-| `topo_features(smiles) → dict` | SMILES → 边数/环数/环大小 | 廉价粗筛特征 |
+| `topo_features(smiles) → dict` | SMILES → 边数/环数/环大小 | 候选侧粗特征 |
+| `image_features(crop) → dict` | 文献裁剪图 → `edges` / `rings` / `ring_sizes` / `labels` | **查询侧**粗特征；`legible=true` 时必须有值，用于初筛 |
 | `verify_doc(pdf, doi, title) → doc` | PDF + 声称的 DOI/标题 → `verify_status` / `title_sim` | 前两页文本，无文本层才 OCR |
 | `has_structure(pdf) → bool` | PDF → 是否至少含 1 个结构式 | 入格闸门（ADR-018） |
 | `rank_candidates(figure, pool) → [≤3]` | 裁剪图 + 候选池 → 3 个有序候选 | 先拓扑后外观 |
@@ -296,6 +299,7 @@
 
 | 版本 | 变更 |
 |---|---|
+| v0.5.7.0 | 补上文献图侧粗特征：`crops.jsonl` 增加 `features`，新增 `image_features(crop)`，§零 明确查询侧特征必填；契约同步到 v0.3.1 的 `query_features` |
 | v0.5.6.0 | 人类确认私库名为 `Nikki-SU/CSDws`；新增「人类已确认的事实」区，作废占位名 `csd-workspace` |
 | v0.5.5.0 | 新增 ADR-021：不可读判定不得成为逃避失败的出口（独立闸门、模型无弃权、不可读桶抽检、误判率公开）；ADR-005/017 增加约束引用 |
 | v0.5.4.0 | 修订 ADR-017：删除置信度三态与「不确定放行」，改为「可读性闸门 + 二值粗特征硬筛」；PLAN §4.3 同步改为「不做完整 image→graph，但必须提粗特征」 |

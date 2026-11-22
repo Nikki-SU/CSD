@@ -1,4 +1,4 @@
-# 前后端接口契约 v0.3.0
+# 前后端接口契约 v0.3.1
 
 > 角色：
 > - **公库** = `Nikki-SU/CSD`（公开）：只放代码、本契约与文档；**零数据**。
@@ -13,6 +13,7 @@
 3. 每图候选数 ≤ 3，`max_candidates` 固定 3，前端不得改。
 4. 指标由后端 `report` 计算，前端只展示。
 5. 没有后端数据就不显示结果区，不造假、不预填。
+6. `legible=true` 的图**必须有 `query_features`**（从文献图提取的粗特征）；不得只算候选侧特征，查询侧缺值就无法初筛。
 
 ---
 
@@ -145,6 +146,7 @@
       "compare_path": "outbox/j_20261122_1430_a1b2c3/compare/p004_f01.png",
       "legible": true,
       "has_structure": true,
+      "query_features": {"edges": 14, "rings": 1, "ring_sizes": [5], "labels": ["N", "O"]},
       "candidates": [
         {
           "rank": 1,
@@ -162,6 +164,7 @@
 - `status`：`done` | `partial` | `failed`。
 - `figures` 排序：`(page, bbox_y1, bbox_x1)`。
 - `candidates`：`rank` 1–3 唯一，按 `rank` 升序；去重后不足 3 个则如实少放。
+- `query_features`：从**文献图**上提取的粗特征，与候选侧 `features` 同构；有环 / 无环、杂原子存在性是初筛的左侧输入。`legible=true` 时必填；`legible=false` 的图整条排除，不填。
 - `ring_sizes` 升序；`labels` 为大写元素符号并排序。
 - 不出现 SMILES / InChIKey / 分子名。
 
@@ -174,10 +177,12 @@
 ```
 job_id,figure_id,page,bbox_x1,bbox_y1,bbox_x2,bbox_y2,page_w,page_h,
 legible,has_structure,rank,candidate_id,phash,ssim,topo_match,
-edges,rings,ring_sizes,labels,crop_path,render_path,compare_path,doc_verify
+edges,rings,ring_sizes,labels,crop_path,render_path,compare_path,doc_verify,
+query_edges,query_rings,query_ring_sizes,query_labels
 ```
 
 - 一行一个候选；`ring_sizes` 与 `labels` 用 `|` 分隔，如 `5|6`、`N|O`。
+- `query_*` 为**文献图侧**粗特征，每行重复；分隔规则同候选侧。`legible=true` 时不得为空。
 - `doc_verify` 为文章级字段，每行重复。
 
 ---
@@ -317,5 +322,6 @@ job_id,figure_id,selected_rank,verdict,redrawn_smiles,reviewer,reviewed_at
 
 | 版本 | 变更 |
 |---|---|
+| v0.3.1 | 补上文献图侧粗特征：`result.json` 增加图级 `query_features`，`result.csv` 追加 `query_edges/query_rings/query_ring_sizes/query_labels`；§零 明确 `legible=true` 时查询侧特征必填 |
 | v0.3.0 | 重写：新增命名规范、UI 功能清单、零数据红线；统一 `figure_id`；新增 `doc.json` 与 `verify_status`；候选去 SMILES/InChIKey；`labels` 明确三种 verdict；明确大文件与写并发处理 |
 | v0.2.0 | 文件即接口；路径制契约；轮询与写入规范 |
