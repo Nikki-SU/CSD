@@ -22,3 +22,10 @@ csd_download/
 
 # 分享包与构建产物
 .trae-html-share-packages/
+node_modules/
+dist/
+*.tsbuildinfo
+*.local
+.DS_Store
+.env
+.env.*
