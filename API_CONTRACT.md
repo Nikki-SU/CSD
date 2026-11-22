@@ -1,9 +1,10 @@
-# 前后端接口契约 v0.3.1
+# 前后端接口契约 v0.4.0
 
 > 角色：
 > - **公库** = `Nikki-SU/CSD`（公开）：只放代码、本契约与文档；**零数据**。
-> - **私库** = `Nikki-SU/CSDws`（私有）：放 PDF、裁剪图、样本、标注、缓存，跑 GitHub Actions。
-> 传输层：不建 HTTP 服务。前端用 GitHub Contents API 读写私库文件。
+> - **私库** = `Nikki-SU/CSDws`（私有）：只放代码、任务元数据、文本结果与缩略图；**不放 PDF、不放全尺寸图像**。
+> - **本地工作区**：放 PDF、全尺寸裁剪图与对比图；解析与匹配也在本地跑。
+> 传输层：不建 HTTP 服务。前端用 GitHub Contents API 读写私库文件；大文件导出走本地 zip。
 > 本文件是前后端唯一事实源。字段、路径、枚举以本文为准；改动按 §十三 执行。
 
 ## 零、硬约束
@@ -14,6 +15,7 @@
 4. 指标由后端 `report` 计算，前端只展示。
 5. 没有后端数据就不显示结果区，不造假、不预填。
 6. `legible=true` 的图**必须有 `query_features`**（从文献图提取的粗特征）；不得只算候选侧特征，查询侧缺值就无法初筛。
+7. 私库不存 PDF、不存全尺寸裁剪/对比图；只存文本结果与长边 ≤ 512 px 的缩略图。commit 历史永久，不把大数据写进去。
 
 ---
 
@@ -72,11 +74,11 @@
 ## 二、数据流
 
 ```
-① 前端写 inbox/{job}/source.pdf（或 doi） + job.json
-② 私库 Actions 由 paths: inbox/** 触发：ingest → docverify → render → coarse → fine → chemcheck
-③ 结果 commit 回 outbox/{job}/；前端轮询 .progress.json 与 result.json
-④ 人工三选一 / 全错 → 写 labels/{job}.csv
-⑤ 后端 report 读 labels 算 metrics.json；前端只展示
+① 本地 CLI 读本地目录（PDF 或图片），生成 inbox/{job}/job.json；source_ref 是本地路径
+② 本地依次跑 ingest → docverify → render → coarse → fine → chemcheck
+③ 结果写本地 outbox/{job}/；只把 doc.json、result.json、result.csv、metrics.json、labels/、thumbs/ 推到私库
+④ 前端用 Contents API 读私库结果；人审看缩略图，写回 labels/{job}.csv
+⑤ 本地把 outbox/{job}/ 打成 zip 导出；私库不承担 PDF 与大图
 ```
 
 ---
@@ -86,7 +88,7 @@
 ```json
 {
   "job_id": "j_20261122_1430_a1b2c3",
-  "schema": 1,
+  "schema": 2,
   "created_at": "2026-11-22T06:30:00Z",
   "source_type": "pdf",
   "source_ref": "inbox/j_20261122_1430_a1b2c3/source.pdf",
@@ -132,7 +134,7 @@
 ```json
 {
   "job_id": "j_20261122_1430_a1b2c3",
-  "schema": 1,
+  "schema": 2,
   "status": "done",
   "doc": {"verify_status": "verified", "doi": "10.1021/ja01101a001", "source": "publisher"},
   "counts": {"figures": 12, "legible": 11, "has_structure": 12},
@@ -142,8 +144,9 @@
       "page": 4,
       "bbox": [112, 240, 389, 331],
       "page_wh": [1700, 2200],
-      "crop_path": "outbox/j_20261122_1430_a1b2c3/crops/p004_f01.png",
-      "compare_path": "outbox/j_20261122_1430_a1b2c3/compare/p004_f01.png",
+      "thumb_path": "outbox/j_20261122_1430_a1b2c3/thumbs/p004_f01.jpg",
+      "crop_path": "D:/csd/outbox/j_20261122_1430_a1b2c3/crops/p004_f01.png",
+      "compare_path": "D:/csd/outbox/j_20261122_1430_a1b2c3/compare/p004_f01.png",
       "legible": true,
       "has_structure": true,
       "query_features": {"edges": 14, "rings": 1, "ring_sizes": [5], "labels": ["N", "O"]},
@@ -162,6 +165,8 @@
 ```
 
 - `status`：`done` | `partial` | `failed`。
+- `thumb_path`：私库内缩略图（长边 ≤ 512 px，JPEG），**前端唯一可读的图**。
+- `crop_path` / `compare_path`：本地绝对路径，后端本地使用，前端不解析、不请求。
 - `figures` 排序：`(page, bbox_y1, bbox_x1)`。
 - `candidates`：`rank` 1–3 唯一，按 `rank` 升序；去重后不足 3 个则如实少放。
 - `query_features`：从**文献图**上提取的粗特征，与候选侧 `features` 同构；有环 / 无环、杂原子存在性是初筛的左侧输入。`legible=true` 时必填；`legible=false` 的图整条排除，不填。
@@ -178,7 +183,7 @@
 job_id,figure_id,page,bbox_x1,bbox_y1,bbox_x2,bbox_y2,page_w,page_h,
 legible,has_structure,rank,candidate_id,phash,ssim,topo_match,
 edges,rings,ring_sizes,labels,crop_path,render_path,compare_path,doc_verify,
-query_edges,query_rings,query_ring_sizes,query_labels
+query_edges,query_rings,query_ring_sizes,query_labels,thumb_path
 ```
 
 - 一行一个候选；`ring_sizes` 与 `labels` 用 `|` 分隔，如 `5|6`、`N|O`。
@@ -199,6 +204,19 @@ job_id,figure_id,selected_rank,verdict,redrawn_smiles,reviewer,reviewed_at
 - `illegible`：`selected_rank` 空，`redrawn_smiles` 空。
 - 幂等：按 `(figure_id, reviewer)` 覆盖；整文件重写前先 GET `sha`。
 
+### 7.1 `labels/{job_id}_topo.csv`
+
+拓扑校对**只记被标红的项**，不记全对项：
+
+```
+job_id,figure_id,feature,expected,detected,reviewer,reviewed_at
+```
+
+- `feature`：`edges` | `rings` | `ring_sizes` | `labels`；一行一个错项，同一图可多行。
+- `expected` 为人工判断的正确值，`detected` 为后端原识别值；`ring_sizes` 用 `|` 分隔。
+- 准确率口径：`1 − 标红项数 ÷ (已审图数 × 4)`，分母取 `labels/{job}.csv` 中已审图数。
+- **前提**：审一张图必须四项都过目；每张审过的图在 `labels/{job}.csv` 必有一行。否则分母不成立，不得出准确率。
+
 ---
 
 ## 八、`.progress.json`
@@ -217,18 +235,20 @@ job_id,figure_id,selected_rank,verdict,redrawn_smiles,reviewer,reviewed_at
 ```json
 {
   "job_id": "j_20261122_1430_a1b2c3",
-  "schema": 1,
+  "schema": 2,
   "n": 100,
   "hit@1": {"count": 40, "rate": 0.4000},
   "hit@2": {"count": 55, "rate": 0.5500},
   "hit@3": {"count": 75, "rate": 0.7500},
   "miss": {"count": 20, "rate": 0.2000},
   "illegible": {"count": 5, "rate": 0.0500},
-  "coverage@3": 0.7500
+  "coverage@3": 0.7500,
+  "topo": {"reviewed_figures": 80, "wrong_items": 12, "accuracy": 0.9625}
 }
 ```
 
 - `n` = 已审且 `legible=true` 的图数；`miss` 与 `illegible` 不计入命中。
+- `topo.accuracy = 1 − wrong_items ÷ (reviewed_figures × 4)`；`reviewed_figures` 取 `labels/{job}.csv` 的已审图数，缺 `labels` 时 `topo` 为 `null`，不得估算。
 - 分组统计（按年代/刊物/风格）由后端另出 `metrics_by_group.json`，结构同上并增加 `group` 字段。
 
 ---
@@ -322,6 +342,7 @@ job_id,figure_id,selected_rank,verdict,redrawn_smiles,reviewer,reviewed_at
 
 | 版本 | 变更 |
 |---|---|
+| v0.4.0 | 存储分工改为「本地处理、私库只存文本与缩略图」：`result.json` 新增 `thumb_path`（私库内，前端唯一可读图），`crop_path/compare_path` 明确为本地路径；`result.csv` 末尾追加 `thumb_path`；新增 `labels/{job}_topo.csv` 与 `metrics.topo` 口径；PDF 与大图不进私库；`schema` 升为 2 |
 | v0.3.1 | 补上文献图侧粗特征：`result.json` 增加图级 `query_features`，`result.csv` 追加 `query_edges/query_rings/query_ring_sizes/query_labels`；§零 明确 `legible=true` 时查询侧特征必填 |
 | v0.3.0 | 重写：新增命名规范、UI 功能清单、零数据红线；统一 `figure_id`；新增 `doc.json` 与 `verify_status`；候选去 SMILES/InChIKey；`labels` 明确三种 verdict；明确大文件与写并发处理 |
 | v0.2.0 | 文件即接口；路径制契约；轮询与写入规范 |
