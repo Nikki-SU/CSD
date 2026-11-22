@@ -24,6 +24,7 @@ SOURCE_RE = re.compile(r"S\d{6,}")
 ORGANIC_SUBFIELD = "Organic Chemistry"
 
 # 有机论文的强正向特征：合成、机理、结构、反应类型、化合物类别、人名反应
+# 英/德/法三语；德语刊（Chem. Ber.、Liebigs、Angew.、ZfN B）标题不能只看英文
 ORGANIC_STRONG = re.compile(
     r"synthes|synthetic|prepar|formed|formation|reaction|mechanism|kinetic|"
     r"catalys|catalyzed|intermediate|structure|stereochem|configur|conformation|"
@@ -36,8 +37,23 @@ ORGANIC_STRONG = re.compile(
     r"grignard|diels|wittig|friedel|reformatsky|claisen|aldol|michael|"
     r"mannich|pinacol|beckmann|hofmann|curtius|schmidt|baeyer|perkin|"
     r"knoevenagel|dieckmann|robinson|"
-    r"on the action|constitution|studies on|studies in",
-    re.I,
+    r"on the action|constitution|studies on|studies in|"
+    # 德语
+    r"darstellung|synthese|reaktion|verbindung|derivat|säure|ester|amid|"
+    r"alkohol|keton|aldehyd|äther|halogenid|nitril|oxim|hydrazon|"
+    r"heterocycl|alkaloid|terpen|steroid|peptid|nucleosid|kohlenhydrat|"
+    r"aromatisch|aliphatisch|oxydation|reduktion|hydrierung|halogenierung|"
+    r"nitrierung|sulfonierung|alkylierung|acylierung|veresterung|"
+    r"umlagerung|kondensation|cyclisierung|polymerisation|spaltung|"
+    r"isomerie|konfiguration|zur kenntnis|über die|"
+    # 法语
+    r"synthèse|préparation|réaction|mécanisme|dérivé|composé|acide|alcool|"
+    r"cétone|aldéhyde|éther|halogénure|nitrile|oxime|hydrazone|hétérocycle|"
+    r"alcaloïde|terpène|stéroïde|peptide|nucléoside|glucide|aromatique|"
+    r"aliphatique|oxydation|réduction|hydrogénation|halogénation|nitration|"
+    r"sulfonation|acylation|estérification|transposition|condensation|"
+    r"cyclisation|polymérisation",
+    re.IGNORECASE,
 )
 
 # 明显非有机的标题特征：物性、晶体、谱学理论等
@@ -51,21 +67,32 @@ NON_ORGANIC_TITLE = re.compile(
 )
 
 
-def is_organic_work(work: dict) -> bool:
+PURE_ORGANIC = re.compile(
+    r"(J\. Org\. Chem\.|Tetrahedron|Synthesis|Perkin Trans\. 1|J\. Chem\. Soc\. C|"
+    r"Chemische Berichte|Liebigs Ann|Justus Liebigs|Helvetica Chimica Acta|"
+    r"Carbohydr\. Res\.|J\. Heterocycl\. Chem\.|Heterocycles|Chemistry Letters|"
+    r"J\. Organomet\. Chem\.)",
+    re.I,
+)
+
+
+def is_organic_work(work: dict, pure_organic: bool = False) -> bool:
     """判定是否像有机论文。
 
-    先看标题里的强正向词（合成、机理、反应、化合物类别等），命中即算有机；
-    没有再退回 OpenAlex 学科标签，要求第一标签是有机化学。
+    - 命中强物性词且没有强正向词 → 直接排除
+    - 纯有机刊 → 只要不像物化/无机就收
+    - 否则：标题命中英/德/法正向词，或任一学科标签是有机化学
     """
     title = work.get("title") or ""
-    if ORGANIC_STRONG.search(title):
+    strong = bool(ORGANIC_STRONG.search(title))
+    if NON_ORGANIC_TITLE.search(title) and not strong:
+        return False
+    if pure_organic or strong:
         return True
     topics = work.get("topics") or []
-    if topics:
-        primary = (topics[0].get("subfield") or {}).get("display_name")
-        if primary == ORGANIC_SUBFIELD and not NON_ORGANIC_TITLE.search(title):
-            return True
-    return False
+    return any(
+        (t.get("subfield") or {}).get("display_name") == ORGANIC_SUBFIELD for t in topics
+    )
 
 
 @dataclass(frozen=True)
@@ -149,12 +176,13 @@ def sample_cell(
     pool_size: int | None = None,
 ) -> list[dict]:
     config = config or Config.from_env()
-    pool = min(pool_size or max(limit * 6, 60), 200)
+    pool = min(pool_size or max(limit * 20, 200), 200)
     works = openalex_works(
         cell.source_id, year, per_page=pool, mailto=config.openalex_mailto, timeout=config.timeout
     )
     if organic_only:
-        works = [w for w in works if is_organic_work(w)]
+        pure = bool(PURE_ORGANIC.search(cell.journal))
+        works = [w for w in works if is_organic_work(w, pure_organic=pure)]
     seed = f"{cell.source_id}:{year}" + (f":{seed_suffix}" if seed_suffix else "")
     random.Random(seed).shuffle(works)
     rows = []

@@ -15,12 +15,12 @@
 - `pipeline/sample.py`
   - 从 `JOURNALS_BY_ERA.md` 解析刊物与 OpenAlex source id
   - 按（刊, 年）向 OpenAlex 取候选
-  - **有机过滤**：标题先匹配强正向词（合成、机理、结构、反应类型、化合物类别、人名反应），命不中再看学科标签，要求第一标签是 `Organic Chemistry`
-  - 每格查询池 60 篇，只输出 10 篇
+  - **有机过滤**：每格先拉 200 篇候选；标题命中英/德/法强正向词（合成、机理、结构、反应类型、化合物类别、人名反应）即收；纯有机刊（JOC、Tetrahedron、Chem. Ber.、Liebigs、HCA 等）只要不像物化/无机就收；综合刊再看任一学科标签是否为 `Organic Chemistry`
+  - 每格输出 10 篇
 - 产物：
-  - `exports/dois.txt`：纯文本，每行一个 DOI，共 **6486 条**
+  - `exports/dois.txt`：纯文本，每行一个 DOI，共 **6569 条**
   - `exports/doi_organic_10.csv`：同批 DOI + 刊名、年份、卷期、标题
-  - 覆盖 1900–1979、26 种刊、657 个「刊 × 年」格子；629 格满 10 篇，28 格不足
+  - 覆盖 1900–1979、26 种刊、657 个「刊 × 年」格子；656 格满 10 篇，仅 1 格不足（BCSJ 1948 只有 9 篇，OpenAlex 该年仅 15 条有 DOI）
 
 ### 2. 取全文
 
