@@ -113,7 +113,7 @@ Open Babel 仍然保留，但只做两件事：**格式转换**（mol ↔ SDF �
 | | 仓库 | 可见性 | 职责 | 部署方式 |
 |---|---|---|---|---|
 | 前端 | `Nikki-SU/CSD`（本库） | 公开 | SPA 界面；**同时内嵌后端骨架**（base64 常量），用于一键安装 | `main` 分支 push → GitHub Actions 构建 → GitHub Pages |
-| 后端 | 使用者自己的私有库（如 `csd-workspace`） | 私有 | `.github/workflows/*.yml` + `.github/scripts/*.py`，全部重计算在这里跑 | 由前端「一键安装」写入，无需看文档 |
+| 后端 | `Nikki-SU/CSDws`（私有） | 私有 | `.github/workflows/*.yml` + `.github/scripts/*.py`，全部重计算在这里跑 | 由前端「一键安装」写入，无需看文档 |
 
 - **作者零服务器**：不托管任何用户数据。
 - **用户零配置**：不做 fork、不读部署文档，点一次按钮。
@@ -133,7 +133,7 @@ Open Babel 仍然保留，但只做两件事：**格式转换**（mol ↔ SDF �
                │
                ▼
 ┌─────────────────────────────┐
-│  使用者私有库 csd-workspace  │
+│  私库 Nikki-SU/CSDws         │
 │  inbox/{job}/source.pdf     │
 │  inbox/{job}/candidates.sdf │
 │  inbox/{job}/job.json       │

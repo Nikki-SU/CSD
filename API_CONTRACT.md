@@ -2,7 +2,7 @@
 
 > 角色：
 > - **公库** = `Nikki-SU/CSD`（公开）：只放代码、本契约与文档；**零数据**。
-> - **私库** = 使用者自己的私有工作库（默认 `csd-workspace`）：放 PDF、裁剪图、样本、标注、缓存，跑 GitHub Actions。
+> - **私库** = `Nikki-SU/CSDws`（私有）：放 PDF、裁剪图、样本、标注、缓存，跑 GitHub Actions。
 > 传输层：不建 HTTP 服务。前端用 GitHub Contents API 读写私库文件。
 > 本文件是前后端唯一事实源。字段、路径、枚举以本文为准；改动按 §十三 执行。
 
