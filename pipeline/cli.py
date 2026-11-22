@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -107,6 +108,34 @@ def _cmd_batch(args: argparse.Namespace) -> int:
     print(f"明细: {summary['result_path']}")
     if not summary["cookie_names"]:
         print("警告：未读到 cookies，闭源站会返回 401/403")
+    return 0
+
+
+def _cmd_pagescan(args: argparse.Namespace) -> int:
+    from .page_scan import scan_pdf
+
+    paths = [Path(args.pdf)]
+    pdfs: list[Path] = []
+    for path in paths:
+        if path.is_dir():
+            pdfs.extend(sorted(path.rglob("*.pdf")))
+        else:
+            pdfs.append(path)
+    rows: list[dict] = []
+    for pdf in pdfs:
+        rows.extend(scan_pdf(pdf, dpi=args.dpi))
+    out = Path(args.out) if args.out else Path("pagescan.csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", encoding="utf-8-sig", newline="") as handle:
+        fields = ["pdf", "page", "chars", "images", "drawings",
+                  "median_line_h", "big_blocks", "caption_hit", "has_figure", "ms"]
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+    figure_pages = sum(1 for r in rows if r["has_figure"])
+    print(f"{len(pdfs)} 篇 / {len(rows)} 页，判为有图 {figure_pages} 页，"
+          f"可省 MinerU {len(rows) - figure_pages} 页")
+    print(f"明细: {out}")
     return 0
 
 
@@ -224,6 +253,12 @@ def main(argv: list[str] | None = None) -> int:
     browser.add_argument("--headless", action="store_true")
     browser.add_argument("--out")
     browser.set_defaults(func=_cmd_browser)
+
+    pagescan = sub.add_parser("pagescan", help="页级判断有没有图（不调用 MinerU）")
+    pagescan.add_argument("--pdf", required=True, help="单个 PDF 或目录")
+    pagescan.add_argument("--dpi", type=int, default=150)
+    pagescan.add_argument("--out")
+    pagescan.set_defaults(func=_cmd_pagescan)
 
     args = parser.parse_args(argv)
     return args.func(args)
