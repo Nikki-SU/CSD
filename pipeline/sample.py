@@ -47,12 +47,15 @@ def is_organic_work(work: dict) -> bool:
     这类混挂文章当成有机论文。
     """
     topics = work.get("topics") or []
-    if not topics:
-        return False
-    primary = (topics[0].get("subfield") or {}).get("display_name")
-    if primary != ORGANIC_SUBFIELD:
-        return False
     title = work.get("title") or ""
+    if topics:
+        primary = (topics[0].get("subfield") or {}).get("display_name")
+        if primary != ORGANIC_SUBFIELD:
+            return False
+    else:
+        # 早期文献常没有学科标签，退回标题判断
+        if not ORGANIC_TITLE_HINT.search(title):
+            return False
     if NON_ORGANIC_TITLE.search(title) and not ORGANIC_TITLE_HINT.search(title):
         return False
     return True
