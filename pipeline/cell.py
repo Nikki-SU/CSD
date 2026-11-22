@@ -80,7 +80,9 @@ def run_cell(
     captionless_count = 0
 
     for round_no in range(1, config.max_rounds_per_cell + 1):
-        rows = sample_fn(cell, year, limit=config.pool_per_round, config=config)
+        rows = sample_fn(
+            cell, year, limit=config.pool_per_round, config=config, seed_suffix=str(round_no)
+        )
         rows = [row for row in rows if row.get("doi") and row["doi"] not in tried]
         if not rows:
             break

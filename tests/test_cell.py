@@ -55,7 +55,7 @@ class TestCellLoop(unittest.TestCase):
 
             calls = []
 
-            def sample_fn(cell, year, limit, config):
+            def sample_fn(cell, year, limit, config, seed_suffix=""):
                 calls.append(1)
                 return rows
 
@@ -75,7 +75,7 @@ class TestCellLoop(unittest.TestCase):
             pdf_dir = Path(tmp) / "pdfs"
             counter = {"round": 0}
 
-            def sample_fn(cell, year, limit, config):
+            def sample_fn(cell, year, limit, config, seed_suffix=""):
                 counter["round"] += 1
                 rows = []
                 for index in range(20):
@@ -105,7 +105,7 @@ class TestCellLoop(unittest.TestCase):
                 _pdf(pdf_dir, doi)
                 rows.append({"doi": doi})
 
-            def sample_fn(cell, year, limit, config):
+            def sample_fn(cell, year, limit, config, seed_suffix=""):
                 return rows
 
             def screen_fn(pdf, doi, out, config):
@@ -134,7 +134,7 @@ class TestCellLoop(unittest.TestCase):
                 _pdf(pdf_dir, doi)
                 rows.append({"doi": doi})
 
-            def sample_fn(cell, year, limit, config):
+            def sample_fn(cell, year, limit, config, seed_suffix=""):
                 return rows
 
             def screen_fn(pdf, doi, out, config):

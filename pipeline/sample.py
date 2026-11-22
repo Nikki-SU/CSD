@@ -93,12 +93,19 @@ def openalex_works(
     return resp.json().get("results") or []
 
 
-def sample_cell(cell: JournalCell, year: int, limit: int = 20, config: Config | None = None) -> list[dict]:
+def sample_cell(
+    cell: JournalCell,
+    year: int,
+    limit: int = 20,
+    config: Config | None = None,
+    seed_suffix: str = "",
+) -> list[dict]:
     config = config or Config.from_env()
     works = openalex_works(
         cell.source_id, year, per_page=limit, mailto=config.openalex_mailto, timeout=config.timeout
     )
-    random.Random(f"{cell.source_id}:{year}").shuffle(works)
+    seed = f"{cell.source_id}:{year}" + (f":{seed_suffix}" if seed_suffix else "")
+    random.Random(seed).shuffle(works)
     rows = []
     for position, work in enumerate(works, start=1):
         oa = work.get("best_oa_location") or {}
