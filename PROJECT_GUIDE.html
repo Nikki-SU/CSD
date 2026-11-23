@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CSD 项目导读 · 从老文献到化学结构式</title>
+<style>
+  :root {
+    --bg: #faf9f6;
+    --card: #ffffff;
+    --ink: #1f2421;
+    --muted: #6b6f6a;
+    --line: #e4e0d8;
+    --accent: #2f5d50;
+    --accent-soft: #e8f0ec;
+    --warn: #9a6b1f;
+    --warn-soft: #fbf1df;
+    --todo: #8a8f8b;
+    --todo-soft: #f1f0ed;
+    --danger: #9c3d34;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.75;
+    font-size: 15px;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 96px; }
+
+  header.hero { padding: 64px 0 40px; border-bottom: 1px solid var(--line); }
+  .kicker {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 14px;
+  }
+  h1 { font-size: clamp(26px, 4vw, 40px); line-height: 1.3; margin: 0 0 16px; font-weight: 650; letter-spacing: -.01em; }
+  .lede { font-size: 17px; color: #40453f; max-width: 720px; margin: 0; }
+  .lede b { color: var(--accent); font-weight: 600; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 32px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .stat .num { font-family: var(--mono); font-size: 26px; font-weight: 600; color: var(--accent); line-height: 1.2; }
+  .stat .lbl { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+  section { padding-top: 56px; }
+  h2 { font-size: 22px; margin: 0 0 8px; font-weight: 650; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 14.5px; }
+
+  .cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 15.5px; font-weight: 650; }
+  .card p { margin: 0; color: #4c514b; font-size: 14px; }
+  .card .tag {
+    display: inline-block; font-family: var(--mono); font-size: 11px;
+    color: var(--accent); background: var(--accent-soft);
+    border-radius: 999px; padding: 2px 10px; margin-bottom: 10px;
+  }
+
+  /* 流程 */
+  .flow { display: flex; gap: 0; overflow-x: auto; padding: 6px 2px 14px; margin-bottom: 8px; }
+  .node {
+    flex: 0 0 auto; min-width: 118px; text-align: center; cursor: pointer;
+    padding: 12px 8px; border-radius: 10px; border: 1px solid transparent;
+    background: transparent; color: inherit; font: inherit; position: relative;
+  }
+  .node:hover { background: #fff; border-color: var(--line); }
+  .node.active { background: #fff; border-color: var(--accent); box-shadow: 0 1px 0 var(--accent) inset; }
+  .dot {
+    width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 6px;
+    display: grid; place-items: center; font-family: var(--mono); font-size: 12px;
+    border: 1.5px solid var(--line); background: #fff; color: var(--muted);
+  }
+  .node[data-state="done"] .dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .node[data-state="partial"] .dot { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+  .node[data-state="todo"] .dot { background: var(--todo-soft); border-color: var(--todo); color: var(--todo); }
+  .node .name { font-size: 12.5px; line-height: 1.4; color: #3c413b; }
+  .node .st { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .arrow { align-self: center; color: #c9c5bb; font-size: 14px; padding: 0 2px; }
+
+  .detail {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 22px 24px; min-height: 168px;
+  }
+  .detail-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .detail-head h3 { margin: 0; font-size: 17px; font-weight: 650; }
+  .badge { font-family: var(--mono); font-size: 11px; border-radius: 999px; padding: 2px 9px; }
+  .badge.done { background: var(--accent-soft); color: var(--accent); }
+  .badge.partial { background: var(--warn-soft); color: var(--warn); }
+  .badge.todo { background: var(--todo-soft); color: var(--todo); }
+  .detail dl { display: grid; grid-template-columns: 92px 1fr; gap: 6px 14px; margin: 0; }
+  .detail dt { color: var(--muted); font-size: 13px; }
+  .detail dd { margin: 0; font-size: 14px; color: #3c413b; }
+
+  /* 状态矩阵 */
+  .matrix { display: grid; gap: 10px; }
+  .row {
+    display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: center;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 13px 16px; cursor: pointer;
+  }
+  .row .icon { font-family: var(--mono); font-size: 13px; text-align: center; }
+  .row .name { font-size: 14.5px; }
+  .row .name small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .row .state { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .row[data-state="done"] .icon { color: var(--accent); }
+  .row[data-state="partial"] .icon { color: var(--warn); }
+  .row[data-state="todo"] .icon { color: var(--todo); }
+  .row .more { display: none; grid-column: 2 / -1; color: #4c514b; font-size: 13.5px; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 8px; }
+  .row.open .more { display: block; }
+
+  /* 待办 */
+  .todo-list { display: grid; gap: 10px; }
+  .todo-item { display: grid; grid-template-columns: 58px 1fr; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .prio { font-family: var(--mono); font-size: 11px; color: #fff; border-radius: 6px; text-align: center; padding: 3px 0; align-self: start; }
+  .prio.p0 { background: var(--danger); }
+  .prio.p1 { background: var(--warn); }
+  .prio.p2 { background: #7d8480; }
+  .todo-item h4 { margin: 0 0 3px; font-size: 14.5px; font-weight: 600; }
+  .todo-item p { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+  /* 代码 */
+  pre {
+    background: #23282a; color: #e8ece9; border-radius: 10px; padding: 16px 18px;
+    overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.7;
+  }
+  pre .c { color: #8fa39a; }
+  .steps { display: grid; gap: 10px; }
+  .step { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
+  .step .n { font-family: var(--mono); color: var(--accent); font-weight: 600; }
+
+  /* 术语 */
+  .terms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  details.term { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+  details.term summary { cursor: pointer; font-size: 14px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details.term summary::-webkit-details-marker { display: none; }
+  details.term summary::after { content: "+"; color: var(--muted); font-family: var(--mono); }
+  details.term[open] summary::after { content: "−"; }
+  details.term p { margin: 10px 0 0; font-size: 13.5px; color: #4c514b; }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+
+  @media (max-width: 760px) {
+    .stats, .cards3, .terms { grid-template-columns: 1fr 1fr; }
+    .detail dl { grid-template-columns: 1fr; }
+    .detail dt { margin-top: 6px; }
+  }
+  @media (max-width: 520px) {
+    .stats, .cards3, .terms { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 26px 1fr; }
+    .row .state { grid-column: 2; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">CSD · 化学结构式数据集</p>
+    <h1>把一百年前手绘的化学结构式，变成机器能读懂的数据</h1>
+    <p class="lede">
+      这个项目从 <b>1900–1979 年</b>的化学期刊里挑文献，把每篇文章里的<b>结构式图</b>裁出来，
+      再让程序猜出它是哪个分子，最后交给人做一次三选一确认。
+      目标是一批带人工确认标签的老结构式样本，用来训练和评测自动识别。
+    </p>
+    <div class="stats">
+      <div class="stat"><div class="num">6,569</div><div class="lbl">已抽出的文献 DOI</div></div>
+      <div class="stat"><div class="num">657</div><div class="lbl">刊 × 年 格子，每格 10 篇</div></div>
+      <div class="stat"><div class="num">16</div><div class="lbl">本地后端接口</div></div>
+      <div class="stat"><div class="num">0%</div><div class="lbl">候选匹配链路进度</div></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>一句话讲清楚</h2>
+    <p class="sub">如果你完全不懂化学也不懂编程，看这三张卡片就够了。</p>
+    <div class="cards3">
+      <div class="card">
+        <span class="tag">问题</span>
+        <h3>老文献里的结构式只是图片</h3>
+        <p>1950 年代的论文是扫描的，分子结构是一笔一笔画上去的。图片里没有任何“这是苯环、这是羧基”的信息，计算机看不出来。</p>
+      </div>
+      <div class="card">
+        <span class="tag">做法</span>
+        <h3>先找图，再猜分子，最后人确认</h3>
+        <p>程序从 PDF 里把图裁出来，生成几个候选分子图去比对，人只需要在 3 个候选里选一个，或者判定“都不对”。</p>
+      </div>
+      <div class="card">
+        <span class="tag">目标</span>
+        <h3>攒出一批可信的标注数据</h3>
+        <p>每选一次，就多一条“这张图 = 这个分子”的确认记录。攒够之后才能算准确率，也才能拿去训练更好的识别器。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>一篇文献的旅程</h2>
+    <p class="sub">点任意一个环节，看它具体在做什么、现在做到哪一步。颜色：<span style="color:var(--accent)">绿=已完成</span> · <span style="color:var(--warn)">黄=部分完成</span> · <span style="color:var(--todo)">灰=还没做</span>。</p>
+    <div class="flow" id="flow"></div>
+    <div class="detail" id="detail"></div>
+  </section>
+
+  <section>
+    <h2>现在的家底</h2>
+    <p class="sub">按代码实际情况列出，不按计划。点一行展开细节。</p>
+    <div class="matrix" id="matrix"></div>
+  </section>
+
+  <section>
+    <h2>还要做什么</h2>
+    <p class="sub">按优先级排，P0 是“不做就没法用”，P2 是“以后再说”。</p>
+    <div class="todo-list" id="todos"></div>
+  </section>
+
+  <section>
+    <h2>怎么自己跑起来</h2>
+    <p class="sub">不需要懂代码，照着三步做。</p>
+    <div class="steps" style="margin-bottom:18px">
+      <div class="step"><span class="n">1</span><div>在本机启动后端（一个黑色窗口，关掉就停）。</div></div>
+      <div class="step"><span class="n">2</span><div>浏览器打开 <code>http://127.0.0.1:8765</code>，进「设置」填 MinerU 密钥。</div></div>
+      <div class="step"><span class="n">3</span><div>进「新建」，填文献所在文件夹路径，点扫描，勾选后提交。</div></div>
+    </div>
+    <pre><span class="c"># 启动本地后端（首次需要装依赖）</span>
+python -m pip install pymupdf pillow opencv-python-headless requests
+python -m backend.server
+
+<span class="c"># 想让同一局域网的手机/平板也能看（会生成访问码）</span>
+python -m backend.server --lan</pre>
+  </section>
+
+  <section>
+    <h2>术语表</h2>
+    <p class="sub">点开看解释。文中出现的词都在这里。</p>
+    <div class="terms" id="terms"></div>
+  </section>
+
+  <footer>
+    本页是项目现状的自解释文档，数据来自仓库里的实际代码与实测记录。<br />
+    更新于 2026-11-23 · 公库只放代码，文献与图片全部留在本地。
+  </footer>
+</div>
+
+<script>
+const stages = [
+  {
+    id: 1, name: "选文献", state: "done", short: "每刊每年 10 篇",
+    what: "按「刊 × 年」切格子，1900–1979 共 657 个格子，每格挑 10 篇有机化学文章。",
+    now: "已生成 6,569 条 DOI。支持英/德/法标题识别，纯有机刊用排除法，综合刊看学科标签。",
+    block: "清单文件在工作区重置时丢失，需要按目录或重新拉一遍；OpenAlex 有每日额度，昨天撞过一次限流。",
+    why: "没有清单就没有起点。格子的作用是保证年代和刊物分布均匀，避免全是 JACS。"
+  },
+  {
+    id: 2, name: "拿到 PDF", state: "done", short: "三种取法",
+    what: "按 DOI 去开放获取源、出版社、浏览器三个渠道下载 PDF，落盘时文件名保留年份和 DOI。",
+    now: "开放获取源实测成功；登录态批量下载和浏览器过验证码也已写好，依赖你本机的登录状态。",
+    block: "闭源老刊需要机构权限，只能在你自己电脑上跑，沙箱里没有登录态。",
+    why: "PDF 是唯一原料。文件名里的年份决定后面用哪一套结构式画风模板。"
+  },
+  {
+    id: 3, name: "核对身份", state: "done", short: "标题比对",
+    what: "用 DOI 去 Crossref 拿官方标题，和 PDF 前两页的文字比对，确认“下载到的确实是这篇”。",
+    now: "已实现，相似度打分；不一致或无文字会标记出来，前端显示横幅。",
+    block: "很多老文献在 Crossref 没有记录，已改成不报错、标记为“无法核验”。",
+    why: "下载错文件是最隐蔽的错误，一旦错后面全白做。"
+  },
+  {
+    id: 4, name: "找出有图的页", state: "done", short: "页级判图",
+    what: "判断一页里有没有图。有文字层的直接找图注；扫描页渲染成图片，用连通域估计字高，明显更大的块判为图。",
+    now: "实测每页 27–96 毫秒，7 页样本判定与人工一致。",
+    block: "只能判“有没有图”，判不了“是不是结构式”。直方图也会被判成有图。",
+    why: "MinerU 每天只有 1000 页额度，先筛页能把消耗降下来。"
+  },
+  {
+    id: 5, name: "MinerU 解析", state: "partial", short: "需要密钥",
+    what: "把有图的页交给 MinerU，得到版面区块、图注文字和裁好的图片。",
+    now: "客户端与任务队列已接好；密钥可以在前端设置页填写，保存后下一个任务立即生效。",
+    block: "还没有用真实密钥跑过完整一篇；目前验证的是不调 MinerU 的 dry-run 全链路。",
+    why: "老扫描件没有文字层，普通 PDF 工具读不出图注，必须靠版面解析。"
+  },
+  {
+    id: 6, name: "判断结构式", state: "done", short: "读图注",
+    what: "读每张图的图注，判断它是不是化学结构式。谱图、折线图、装置照片不算。",
+    now: "有语义模型时用模型判断，没有时用关键词兜底；拿不准标为待复核，不硬判。",
+    block: "图注缺失的老文献会进入人工复核队列，量可能不小。",
+    why: "只保留结构式，才能让后面的候选匹配有意义。"
+  },
+  {
+    id: 7, name: "裁剪与缩略图", state: "done", short: "本地留大图",
+    what: "把结构式图裁出来存本地，同时生成长边 512 像素的缩略图给网页展示。",
+    now: "裁剪、缩略图、doc/result/csv 三种结果文件都能生成，端到端实测通过。",
+    block: "全尺寸图不进仓库也不进私库，只在本地；网页只看缩略图。",
+    why: "6,000 篇文献的图如果都上传，仓库会被撑爆，所以大图必须留在本地。"
+  },
+  {
+    id: 8, name: "候选匹配", state: "todo", short: "还没开始",
+    what: "生成 3 个候选分子，渲染成图，和文献原图比对边数、环数、环大小、元素标签，打出相似度分数。",
+    now: "一行都还没写：没有装化学库，没有候选池，没有渲染，没有打分。",
+    block: "这是整个项目最硬的一块，也是审阅页真正需要的数据来源。",
+    why: "没有候选，人工就只能“重画”，效率极低；有候选，人只需三选一。"
+  },
+  {
+    id: 9, name: "人工审阅与指标", state: "partial", short: "页面在，数据没接",
+    what: "人在网页上看原图和 3 个候选，选一个或判错；后端据此算命中率和拓扑准确率。",
+    now: "审阅页的界面和交互写好了，但还在用假数据；标注写入接口和指标口径已经定好。",
+    block: "等候选匹配做完才能真正联调；目前只能写标注，没有东西可选。",
+    why: "没有人工确认的标签，就没有“准确率”可言，也无法训练更好的模型。"
+  }
+];
+
+const assets = [
+  ["抽样与清单", "sample.py · cell.py", "done", "已能按 657 个格子抽 10 篇，含三语关键词与纯有机刊排除法。"],
+  ["PDF 获取", "acquire.py · batch_download.py · browser_fetch.py", "done", "开放获取、登录态批量、浏览器过验证码三条路都已写，前两条实测成功。"],
+  ["身份核验", "verify.py", "done", "Crossref 标题比对，404 不再崩，改为标记无法核验。"],
+  ["页级判图", "page_scan.py", "done", "OpenCV 连通域判页，实测 27–96 ms/页。"],
+  ["单篇处理", "article.py · figures.py · pdf_ops.py", "done", "选页、MinerU、图注判定、存图；dry-run 与完整模式都在。"],
+  ["结果生成", "result_build.py", "done", "doc.json / result.json / result.csv / 512px 缩略图，含 bbox 与 DOI 反解。"],
+  ["本地后端", "backend/server.py", "done", "16 个接口：任务、结果、标注、设置、扫描、批量、导出、删除；回环与局域网权限区分。"],
+  ["任务队列", "backend/worker.py", "done", "串行执行，进度落盘，失败不吞异常；密钥保存后即时生效。"],
+  ["前端数据层", "src/api.ts", "partial", "连接、新建、任务、设置四个页面已接真实接口；审阅、报告、筛选、重画仍是假数据。"],
+  ["候选生成与打分", "尚未创建", "todo", "RDKit、分子库、渲染、phash/ssim/topo 全部没有。"],
+  ["指标与报告", "尚未创建", "todo", "hit@1/2/3、拓扑准确率、分组统计都没有实现。"],
+  ["一键启动器", "bootstrap/", "todo", "现在要装 Python 依赖敲命令，还没做双击启动。"],
+  ["清单数据", "exports/dois.txt", "partial", "6,569 条曾生成，工作区重置后丢失，需要重建。"],
+  ["真实 MinerU 跑通", "—", "partial", "接口和队列就绪，尚未用真实密钥跑完整一篇。"]
+];
+
+const todos = [
+  ["P0", "候选生成与打分", "装 RDKit，建候选分子池，渲染成图，算 phash / ssim / 拓扑匹配，产出每图 3 个候选。"],
+  ["P0", "审阅页接真实数据", "用 result.json 替换 mock，展示缩略图与候选，选中后写 labels。"],
+  ["P0", "指标与报告", "读 labels 算 hit@1/2/3、覆盖率、拓扑准确率，按年代和刊物分组。"],
+  ["P0", "清单重建", "按目录扫描或重新抽样，恢复 6,569 条 DOI 与年份刊物信息。"],
+  ["P1", "真实 MinerU 联调", "配好密钥，跑通一篇真实老文献，验证图注、裁剪与缩略图。"],
+  ["P1", "双模式对照", "二值匹配与精确匹配两套结果并存，用数据决定升级与否。"],
+  ["P1", "拓扑校对", "审阅页增加四项特征校对，只记标红项，分母取已审图数。"],
+  ["P2", "一键启动器", "便携 Python 与双击脚本，让不装环境的人也能起服务。"],
+  ["P2", "局域网协作", "同一网段访问、只读浏览、访问码；同步先不做。"],
+  ["P2", "导出与归档", "一 job 一个 zip，含结果与标注；大图不出本地。"]
+];
+
+const terms = [
+  ["DOI", "文献的身份证号，形如 10.1021/ja01101a001。有了它就能唯一定位一篇论文。"],
+  ["结构式", "用线条和元素符号画出的分子骨架图，比如六边形代表苯环。"],
+  ["图注", "图片下面那行字，通常以 Fig. 或 Scheme 开头，说明图里画了什么。"],
+  ["MinerU", "一个版面解析服务，能把扫描 PDF 拆成文字块、图块和图注，每天有免费页数额度。"],
+  ["连通域", "把图片二值化后，连在一起的一团黑色像素。文字是一团团小的，图形是一团团大的。"],
+  ["phash", "感知哈希，把两张图压成一串指纹再比相似度，适合看整体像不像。"],
+  ["SSIM", "结构相似度，逐像素比较两张图的明暗结构，比 phash 更细。"],
+  ["拓扑", "这里指分子的连接关系：几条边、几个环、环多大、有哪些元素标签。"],
+  ["hit@k", "前 k 个候选里有没有正确答案。hit@1 是第一个就选对，hit@3 是前三个里有。"],
+  ["dry-run", "只跑不花钱的步骤：核验、选页、生成空结果，不调用 MinerU。"],
+  ["回环地址", "127.0.0.1，指“这台电脑自己”。只绑回环时，局域网其他设备访问不到。"],
+  ["私库", "原本计划的私有 GitHub 仓库，现在已取消：数据全部留在本地，仓库只放代码。"]
+];
+
+// 流程节点
+const flow = document.getElementById("flow");
+stages.forEach((s, i) => {
+  if (i > 0) {
+    const arrow = document.createElement("span");
+    arrow.className = "arrow";
+    arrow.textContent = "→";
+    flow.appendChild(arrow);
+  }
+  const btn = document.createElement("button");
+  btn.className = "node";
+  btn.dataset.state = s.state;
+  btn.dataset.id = s.id;
+  const label = { done: "已完成", partial: "部分", todo: "未开始" }[s.state];
+  btn.innerHTML = `<div class="dot">${s.id}</div><div class="name">${s.name}</div><div class="st">${label}</div>`;
+  btn.addEventListener("click", () => showStage(s, btn));
+  flow.appendChild(btn);
+});
+
+function showStage(s, btn) {
+  document.querySelectorAll(".node").forEach((n) => n.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  const badge = { done: "已完成", partial: "部分完成", todo: "还没开始" }[s.state];
+  document.getElementById("detail").innerHTML = `
+    <div class="detail-head">
+      <h3>${s.id}. ${s.name}</h3>
+      <span class="badge ${s.state}">${badge}</span>
+    </div>
+    <dl>
+      <dt>在做什么</dt><dd>${s.what}</dd>
+      <dt>现在到哪</dt><dd>${s.now}</dd>
+      <dt>卡在哪</dt><dd>${s.block}</dd>
+      <dt>为什么需要</dt><dd>${s.why}</dd>
+    </dl>`;
+}
+
+// 状态矩阵
+const matrix = document.getElementById("matrix");
+assets.forEach(([name, code, state, detail]) => {
+  const row = document.createElement("div");
+  row.className = "row";
+  row.dataset.state = state;
+  const icon = { done: "✓", partial: "◐", todo: "○" }[state];
+  const label = { done: "已完成", partial: "部分完成", todo: "未开始" }[state];
+  row.innerHTML = `
+    <div class="icon">${icon}</div>
+    <div class="name">${name}<small>${code}</small></div>
+    <div class="state">${label}</div>
+    <div class="more">${detail}</div>`;
+  row.addEventListener("click", () => row.classList.toggle("open"));
+  matrix.appendChild(row);
+});
+
+// 待办
+const todoList = document.getElementById("todos");
+todos.forEach(([prio, title, desc]) => {
+  const item = document.createElement("div");
+  item.className = "todo-item";
+  item.innerHTML = `<div class="prio ${prio.toLowerCase()}">${prio}</div>
+    <div><h4>${title}</h4><p>${desc}</p></div>`;
+  todoList.appendChild(item);
+});
+
+// 术语
+const termWrap = document.getElementById("terms");
+terms.forEach(([word, desc]) => {
+  const d = document.createElement("details");
+  d.className = "term";
+  d.innerHTML = `<summary>${word}</summary><p>${desc}</p>`;
+  termWrap.appendChild(d);
+});
+
+showStage(stages[0], flow.querySelector(".node"));
+</script>
+</body>
+</html>
