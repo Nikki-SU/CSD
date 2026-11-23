@@ -1,42 +1,44 @@
-import { useState } from 'react'
-import { STORAGE_KEYS } from '../types'
+import { useEffect, useState } from 'react'
+import { api, baseUrl, setBaseUrl } from '../api'
 
 export default function ConnectPage() {
-  const [pat, setPat] = useState(() => localStorage.getItem(STORAGE_KEYS.pat) ?? '')
-  const [owner, setOwner] = useState(() => localStorage.getItem(STORAGE_KEYS.owner) ?? 'Nikki-SU')
-  const [repo, setRepo] = useState(() => localStorage.getItem(STORAGE_KEYS.repo) ?? 'CSDws')
-  const [branch, setBranch] = useState(() => localStorage.getItem(STORAGE_KEYS.branch) ?? 'main')
+  const [url, setUrl] = useState(baseUrl())
+  const [state, setState] = useState<'idle' | 'ok' | 'fail'>('idle')
+  const [info, setInfo] = useState('')
 
-  const save = () => {
-    localStorage.setItem(STORAGE_KEYS.pat, pat)
-    localStorage.setItem(STORAGE_KEYS.owner, owner)
-    localStorage.setItem(STORAGE_KEYS.repo, repo)
-    localStorage.setItem(STORAGE_KEYS.branch, branch)
+  const test = async (target: string) => {
+    setBaseUrl(target)
+    setState('idle')
+    setInfo('连接中…')
+    try {
+      const health = await api.health()
+      setState('ok')
+      setInfo(`v${health.version} · ${health.data_dir}`)
+    } catch (error) {
+      setState('fail')
+      setInfo((error as Error).message)
+    }
   }
+
+  useEffect(() => {
+    void test(baseUrl())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
-      <h2>连接工作库</h2>
-      <p className="sub">首次进入 · 只保存在这台设备</p>
+      <h2>连接本地服务</h2>
+      <p className="sub">后端跑在这台机器上，地址只保存在本机浏览器</p>
       <div className="card">
-        <p className="lab">Personal access token</p>
-        <input type="password" placeholder="粘贴 token" value={pat} onChange={(e) => setPat(e.target.value)} />
+        <p className="lab">服务地址</p>
+        <div className="row">
+          <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://127.0.0.1:8765" />
+          <button className="act" onClick={() => void test(url)}>测试连接</button>
+        </div>
+        {state === 'ok' && <p className="ok" style={{ margin: '8px 0 0' }}>已连接 · {info}</p>}
+        {state === 'fail' && <p className="danger" style={{ margin: '8px 0 0' }}>{info}</p>}
       </div>
-      <div className="grid3" style={{ marginBottom: 14 }}>
-        <div>
-          <p className="lab">Owner</p>
-          <input type="text" value={owner} onChange={(e) => setOwner(e.target.value)} />
-        </div>
-        <div>
-          <p className="lab">Repo</p>
-          <input type="text" value={repo} onChange={(e) => setRepo(e.target.value)} />
-        </div>
-        <div>
-          <p className="lab">Branch</p>
-          <input type="text" value={branch} onChange={(e) => setBranch(e.target.value)} />
-        </div>
-      </div>
-      <button className="act" onClick={save}>连接</button>
+      <p className="lab">启动命令：python -m backend.server（局域网加 --lan）</p>
     </>
   )
 }

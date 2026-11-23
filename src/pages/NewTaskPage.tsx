@@ -1,62 +1,117 @@
 import { useState } from 'react'
+import type { PageId } from '../App'
+import { api } from '../api'
 
-export default function NewTaskPage() {
-  const [pathMode, setPathMode] = useState(false)
-  const [srcStyle, setSrcStyle] = useState('pdf')
-  const [imgStyle, setImgStyle] = useState('按文件名年份推断')
-  const [runMode, setRunMode] = useState('只跑二值')
+interface ScanItem {
+  name: string
+  path: string
+  size: number
+  kind: string
+  year: number | null
+}
+
+const LAST_DIR = 'csd.lastDir'
+
+export default function NewTaskPage({ go }: { go: (id: PageId) => void }) {
+  const [dir, setDir] = useState(() => localStorage.getItem(LAST_DIR) ?? '')
+  const [items, setItems] = useState<ScanItem[]>([])
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const scan = async () => {
+    setBusy(true)
+    setMessage('扫描中…')
+    try {
+      const data = await api.scan(dir)
+      setItems(data.items)
+      setPicked(new Set(data.items.map((it) => it.path)))
+      localStorage.setItem(LAST_DIR, dir)
+      setMessage(`找到 ${data.count} 个文件`)
+    } catch (error) {
+      setItems([])
+      setPicked(new Set())
+      setMessage((error as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const toggle = (path: string) => {
+    setPicked((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
+
+  const submit = async () => {
+    if (picked.size === 0) return
+    setBusy(true)
+    setMessage('提交中…')
+    const chosen = items.filter((it) => picked.has(it.path))
+    const pdfs = chosen.filter((it) => it.kind === 'pdf').map((it) => it.path)
+    const images = chosen.filter((it) => it.kind === 'image').map((it) => it.path)
+    try {
+      let created = 0
+      if (pdfs.length) created += (await api.createBatch(pdfs, 'pdf')).created
+      if (images.length) created += (await api.createBatch(images, 'image')).created
+      setMessage(`已创建 ${created} 个任务`)
+      go('tasks')
+    } catch (error) {
+      setMessage((error as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <>
       <h2>新建任务</h2>
-      <div className="grid2">
-        <div className="card">
-          <div style={{ fontWeight: 600, marginBottom: 10 }}>文献 PDF</div>
-          <div style={{ border: '1px dashed var(--border)', borderRadius: 6, padding: 22, textAlign: 'center', color: 'var(--muted)' }}>
-            拖入 PDF · ≤ 100 MB
-          </div>
-          <div className="row" style={{ marginTop: 12 }}>
-            <p className="lab" style={{ margin: 0 }}>风格</p>
-            <select value={srcStyle} onChange={(e) => setSrcStyle(e.target.value)}>
-              <option value="pdf">自动识别 · 可改</option>
-            </select>
-          </div>
-          <button className="act" style={{ marginTop: 12, width: '100%' }}>提交任务</button>
-        </div>
+      <p className="sub">选择本机目录，后端直接读取，不上传</p>
 
+      <div className="card">
+        <p className="lab">目录路径</p>
+        <div className="row">
+          <input
+            type="text"
+            placeholder="例如 D:\\文献批量下载\\pdfs"
+            value={dir}
+            onChange={(e) => setDir(e.target.value)}
+          />
+          <button className="act" disabled={busy || !dir.trim()} onClick={() => void scan()}>扫描</button>
+        </div>
+        {message && <p className="sub" style={{ margin: '8px 0 0' }}>{message}</p>}
+      </div>
+
+      {items.length > 0 && (
         <div className="card">
-          <div style={{ fontWeight: 600, marginBottom: 10 }}>结构式图片 / 批量路径</div>
-          <div style={{ border: '1px dashed var(--border)', borderRadius: 6, padding: 16, textAlign: 'center', color: 'var(--muted)' }}>
-            拖入 PNG / JPG · 可多张
+          <div className="between" style={{ marginBottom: 8 }}>
+            <span className="lab">已选 {picked.size} / {items.length}</span>
+            <span className="row">
+              <button className="act" onClick={() => setPicked(new Set(items.map((it) => it.path)))}>全选</button>
+              <button className="act" onClick={() => setPicked(new Set())}>清空</button>
+            </span>
           </div>
-          <div style={{ marginTop: 10 }}>
-            <p className="lab" style={{ margin: '0 0 5px' }}>或指定路径（批量导入 → 瀑布流）</p>
-            <div className="row">
-              <input type="text" placeholder="粘贴目录路径" disabled={!pathMode} />
-              <button className="act" onClick={() => setPathMode(!pathMode)}>{pathMode ? '取消' : '选文件夹'}</button>
-            </div>
-            <p className="lab" style={{ margin: '5px 0 0' }}>私库路径可直读；本机目录需授权</p>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <p className="lab" style={{ margin: '0 0 5px' }}>风格</p>
-            <select value={imgStyle} onChange={(e) => setImgStyle(e.target.value)}>
-              <option>按文件名年份推断</option>
-              <option>试探多个年代，取效果最好</option>
-              <option>default_1970s</option>
-              <option>default_1980s</option>
-              <option>default_1960s</option>
-              <option>default_1950s</option>
-            </select>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <p className="lab" style={{ margin: '0 0 5px' }}>跑几种模式</p>
-            {['只跑二值', '只跑精确', '两种都跑（对照）'].map((m) => (
-              <span key={m} className={`pill ${runMode === m ? 'on' : ''}`} onClick={() => setRunMode(m)}>{m}</span>
+          <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+            {items.map((item) => (
+              <label key={item.path} className="between" style={{ padding: '6px 0', borderTop: '1px solid var(--border)' }}>
+                <span className="row">
+                  <input type="checkbox" checked={picked.has(item.path)} onChange={() => toggle(item.path)} />
+                  <span className="mono" style={{ fontSize: 12 }}>{item.name}</span>
+                </span>
+                <span className="lab">
+                  {item.year ?? '年份?'} · {(item.size / 1024 / 1024).toFixed(1)} MB
+                </span>
+              </label>
             ))}
           </div>
-          <button className="act" style={{ marginTop: 12, width: '100%' }}>提交任务</button>
+          <button className="act" style={{ marginTop: 12, width: '100%' }} disabled={busy || picked.size === 0} onClick={() => void submit()}>
+            提交 {picked.size} 个任务
+          </button>
         </div>
-      </div>
+      )}
     </>
   )
 }

@@ -43,7 +43,7 @@ export default function App() {
   const pages: Record<PageId, React.ReactNode> = {
     connect: <ConnectPage />,
     tasks: <TasksPage go={go} />,
-    new: <NewTaskPage />,
+    new: <NewTaskPage go={go} />,
     screen: <ScreenPage />,
     review: <ReviewPage go={go} />,
     redraw: <RedrawPage go={go} />,

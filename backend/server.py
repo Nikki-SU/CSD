@@ -19,6 +19,7 @@ import os
 import re
 import secrets
 import shutil
+import sys
 import threading
 import time
 import zipfile
@@ -30,12 +31,13 @@ from urllib.parse import parse_qs, unquote, urlparse
 try:
     from .worker import Worker
 except ImportError:  # 允许直接 python backend/server.py
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
     from worker import Worker
 
 APP_VERSION = "0.5.0"
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA = ROOT / "data"
-FRONTEND_DIST = ROOT / "frontend" / "dist"
+FRONTEND_DIST = ROOT / "dist" if (ROOT / "dist").exists() else ROOT / "frontend" / "dist"
 
 JOB_ID_RE = re.compile(r"^j_\d{8}_\d{4}_[0-9a-f]{6}$")
 STAGES = ("queued", "ingest", "docverify", "render", "coarse", "fine", "chemcheck", "done", "failed")
@@ -239,6 +241,94 @@ def delete_job(job_id: str) -> bool:
     return removed
 
 
+# ---------- 设置与目录扫描 ----------
+
+def settings_path() -> Path:
+    return _data_root / "config.json"
+
+
+def load_settings() -> dict:
+    return read_json(settings_path()) or {}
+
+
+def public_settings() -> dict:
+    saved = load_settings()
+    key = (saved.get("mineru_api_key") or "").strip()
+    return {
+        "mineru_key_set": bool(key),
+        "mineru_key_tail": key[-4:] if key else "",
+        "mineru_model": saved.get("mineru_model") or "vlm",
+    }
+
+
+def save_settings(payload: dict) -> dict:
+    saved = load_settings()
+    if "mineru_key" in payload:
+        key = (payload.get("mineru_key") or "").strip()
+        if key:
+            saved["mineru_api_key"] = key
+        else:
+            saved.pop("mineru_api_key", None)
+    if payload.get("mineru_model"):
+        saved["mineru_model"] = payload["mineru_model"]
+    path = settings_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(saved, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    return public_settings()
+
+
+def scan_directory(raw_path: str, limit: int = 500) -> dict:
+    base = Path(raw_path).expanduser().resolve()
+    if not base.exists():
+        raise ValueError(f"路径不存在: {base}")
+    if not base.is_dir():
+        raise ValueError(f"不是目录: {base}")
+    kinds = {".pdf": "pdf", ".png": "image", ".jpg": "image", ".jpeg": "image",
+             ".tif": "image", ".tiff": "image"}
+    items = []
+    for path in sorted(base.iterdir()):
+        if not path.is_file() or path.suffix.lower() not in kinds:
+            continue
+        match = re.search(r"(1[89]\d{2}|20\d{2})", path.stem)
+        items.append({
+            "name": path.name,
+            "path": str(path),
+            "size": path.stat().st_size,
+            "kind": kinds[path.suffix.lower()],
+            "year": int(match.group(1)) if match else None,
+        })
+        if len(items) >= limit:
+            break
+    return {"path": str(base), "count": len(items), "items": items}
+
+
+def create_jobs_batch(payload: dict) -> dict:
+    paths = payload.get("paths") or []
+    if not isinstance(paths, list) or not paths:
+        raise ValueError("paths 不能为空")
+    source_type = payload.get("source_type") or "pdf"
+    style = payload.get("style_profile") or ""
+    jobs, errors = [], []
+    for raw in paths:
+        try:
+            job = create_job({
+                "source_type": source_type,
+                "source_ref": raw,
+                "style_profile": style,
+                "year": payload.get("year") or "",
+            })
+            if _worker:
+                _worker.submit(job["job_id"])
+            jobs.append(job)
+        except ValueError as exc:
+            errors.append({"path": raw, "error": str(exc)})
+    return {"created": len(jobs), "jobs": jobs, "errors": errors}
+
+
 # ---------- HTTP ----------
 
 class Handler(BaseHTTPRequestHandler):
@@ -308,6 +398,18 @@ class Handler(BaseHTTPRequestHandler):
             jobs = list_jobs(status)
             return self._json(200, {"count": len(jobs), "jobs": jobs})
 
+        if path == "/api/settings":
+            return self._json(200, public_settings())
+
+        if path == "/api/scan":
+            if not self._write_allowed():
+                return self._error(403, "扫描目录仅限本机")
+            target = (parse_qs(parsed.query).get("path") or [""])[0]
+            try:
+                return self._json(200, scan_directory(target))
+            except ValueError as exc:
+                return self._error(400, str(exc))
+
         match = re.match(r"^/api/jobs/([^/]+)$", path)
         if match:
             job = get_job(match.group(1))
@@ -359,6 +461,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, save_labels(payload))
             if path == "/api/labels/topo":
                 return self._json(200, save_topo(payload))
+            if path == "/api/settings":
+                return self._json(200, save_settings(payload))
+            if path == "/api/jobs/batch":
+                return self._json(201, create_jobs_batch(payload))
         except ValueError as exc:
             return self._error(400, str(exc))
         return self._error(404, "接口不存在")

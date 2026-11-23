@@ -10,6 +10,7 @@ import json
 import queue
 import threading
 import traceback
+from dataclasses import replace
 from pathlib import Path
 
 from pipeline.article import process_article
@@ -33,11 +34,23 @@ class Worker:
     def __init__(self, data_root: str | Path, config: Config | None = None, dry_run: bool = False):
         self.data_root = Path(data_root)
         self.config = config or Config.from_env()
-        self.dry_run = bool(dry_run or not self.config.mineru_api_key)
+        self.force_dry_run = bool(dry_run)
+        self.dry_run = self.force_dry_run or not self.config.mineru_api_key
         self.queue: queue.Queue[str] = queue.Queue()
         self._thread: threading.Thread | None = None
         self._running = False
         self.current: str | None = None
+
+    def _effective_config(self) -> Config:
+        """每次执行前重读 data/config.json，前端刚保存的 key 立即生效。"""
+        config = Config.from_env()
+        saved = _read_json(self.data_root / "config.json") or {}
+        key = (saved.get("mineru_api_key") or "").strip()
+        if key:
+            config = replace(config, mineru_api_key=key)
+        if saved.get("mineru_model"):
+            config = replace(config, mineru_model=saved["mineru_model"])
+        return config
 
     def start(self) -> None:
         if self._running:
@@ -93,19 +106,23 @@ class Worker:
         self._progress(job_id, "ingest", 10, "读取 PDF 与元数据")
         self._set_status(job_id, "running")
 
+        config = self._effective_config()
+        dry_run = self.force_dry_run or not config.mineru_api_key
+
         try:
             self._progress(job_id, "docverify", 30, "核验标题与页选择")
             result = process_article(
                 pdf_path,
                 doi,
                 out_dir / "work",
-                config=self.config,
-                dry_run=self.dry_run,
+                config=config,
+                dry_run=dry_run,
             )
             self._progress(job_id, "render", 70, "生成结果与缩略图")
             payload = write_outputs(job, result, pdf_path, out_dir)
             stage = "done"
-            message = f"完成：{payload['counts']['figures']} 张图，结论 {result.outcome}"
+            suffix = "（dry-run，未解析图片）" if dry_run else ""
+            message = f"完成：{payload['counts']['figures']} 张图，结论 {result.outcome}{suffix}"
             self._progress(job_id, stage, 100, message)
             self._set_status(job_id, "done" if result.outcome == "accepted" else "partial")
         except Exception as exc:  # noqa: BLE001
