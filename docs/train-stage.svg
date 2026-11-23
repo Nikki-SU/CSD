@@ -1,0 +1,70 @@
+<svg viewBox="0 0 1200 1000" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>CSD 训练阶段流程</title>
+<desc>图片获取为共同前置，之后分出拓扑链路与风格渲染链路，两条链路合流到图像匹配训练，再回流增强拓扑识别。</desc>
+<defs>
+<marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<rect width="1200" height="1000" fill="#FFFFFF"/>
+
+<text x="600" y="60" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="30" font-weight="600" fill="#1A1A1A">训练阶段 · 两条链路，一个合流</text>
+<text x="600" y="96" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#666666">③ 拓扑是一条线 · ②④ 风格是另一条线 · 两线合流到 ⑤ · ⑤ 回流给 ③</text>
+
+<rect x="60" y="140" width="1080" height="92" rx="14" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1.2"/>
+<circle cx="108" cy="186" r="22" fill="#5F5E5A"/>
+<text x="108" y="186" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="18" font-weight="600" fill="#FFFFFF">1</text>
+<text x="146" y="178" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#444441">图片获取与结构式提取 · 共同前置</text>
+<text x="146" y="210" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#5F5E5A">下载 → 筛无图 → 只切结构式图（命名留年代+DOI）→ 瀑布流人审叉掉非结构式 · 单批约 100 张</text>
+
+<path d="M330 232 L330 272" fill="none" stroke="#993556" stroke-width="2" marker-end="url(#arr)"/>
+<path d="M870 232 L870 272" fill="none" stroke="#185FA5" stroke-width="2" marker-end="url(#arr)"/>
+<text x="348" y="260" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#993556">链路一 · 拓扑</text>
+<text x="888" y="260" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#185FA5">链路二 · 风格与渲染</text>
+
+<rect x="60" y="274" width="540" height="270" rx="16" fill="#FBEAF0" stroke="#993556" stroke-width="1.5"/>
+<circle cx="108" cy="320" r="22" fill="#993556"/>
+<text x="108" y="320" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="18" font-weight="600" fill="#FFFFFF">3</text>
+<text x="146" y="326" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#72243E">拓扑指标与识别调优</text>
+<text x="96" y="374" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#993556">指标既定，调的是识别有效性</text>
+<text x="96" y="406" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#993556">初筛双条件：不叉掉正确答案 + 压缩率高</text>
+<text x="96" y="438" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#993556">环：识别边 → 延长边 → 封闭图形</text>
+<text x="96" y="470" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#993556">OCR 必认杂原子与基团缩写 · 人工标注 100+</text>
+<rect x="96" y="492" width="468" height="38" rx="8" fill="#FFFFFF" stroke="#E24B4A" stroke-width="1"/>
+<text x="330" y="511" text-anchor="middle" dominant-baseline="central" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" font-weight="600" fill="#0F6E56">产出：初筛规则 + 标注集 + 识别度评估</text>
+
+<rect x="640" y="274" width="500" height="140" rx="16" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/>
+<circle cx="688" cy="320" r="22" fill="#185FA5"/>
+<text x="688" y="320" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="18" font-weight="600" fill="#FFFFFF">2</text>
+<text x="726" y="326" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#0C447C">风格识别与规则提取</text>
+<text x="676" y="370" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#185FA5">人工每刊/每年 1–2 张粗标</text>
+<text x="676" y="398" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#185FA5">算法聚类、工程规则 → 画风规则集</text>
+
+<path d="M890 414 L890 446" fill="none" stroke="#185FA5" stroke-width="2" marker-end="url(#arr)"/>
+<rect x="640" y="448" width="500" height="96" rx="16" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.5"/>
+<circle cx="688" cy="496" r="22" fill="#185FA5"/>
+<text x="688" y="496" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="18" font-weight="600" fill="#FFFFFF">4</text>
+<text x="726" y="490" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#0C447C">特定风格渲染训练</text>
+<text x="676" y="526" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#185FA5">随机 100 个分子按年代风格渲染</text>
+
+<path d="M330 544 L330 620" fill="none" stroke="#993556" stroke-width="2" marker-end="url(#arr)"/>
+<path d="M890 544 L890 620" fill="none" stroke="#185FA5" stroke-width="2" marker-end="url(#arr)"/>
+<text x="348" y="590" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#993556">合流</text>
+<text x="908" y="590" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#185FA5">合流</text>
+
+<rect x="60" y="622" width="1080" height="200" rx="16" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
+<circle cx="108" cy="668" r="22" fill="#0F6E56"/>
+<text x="108" y="668" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="18" font-weight="600" fill="#FFFFFF">5</text>
+<text x="146" y="674" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#085041">图像匹配训练与回流 · 两线在此合流</text>
+<text x="96" y="722" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#0F6E56">AI 先匹配 → 人三选一或纠正，累计约 100 张</text>
+<text x="96" y="754" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#0F6E56">用户用 ChemDraw 类工具重画 → 邻接矩阵 → 准确拓扑指标</text>
+<text x="96" y="786" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#0F6E56">与识别拓扑对比 → 回流拓扑识别训练集</text>
+
+<path d="M60 722 L32 722 L32 409 L58 409" fill="none" stroke="#534AB7" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr)"/>
+<text x="40" y="580" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#534AB7" transform="rotate(-90 40 580)">回流给 3</text>
+
+<rect x="60" y="856" width="1080" height="112" rx="14" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="96" y="892" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="18" font-weight="600" fill="#444441">链路一供：拓扑初筛能力 · 链路二供：风格渲染能力</text>
+<text x="96" y="924" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#5F5E5A">两线合流到 ⑤ 做匹配训练；⑤ 用人重画的准确拓扑回流给 ③，让拓扑识别越来越准</text>
+<text x="96" y="952" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#5F5E5A">人审规模：瀑布流单批约 100 张；其余人工标注总量 100–200 张 · MinerU 超 1000 页/篇排队，6000+ 篇不直接依赖</text>
+</svg>

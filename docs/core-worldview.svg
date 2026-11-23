@@ -1,0 +1,41 @@
+<svg viewBox="0 0 1200 900" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>CSD 核心世界观</title>
+<desc>分子是图不是图片，拓扑在不同画风下相同，靠两端搭桥与生成转检索降低每步精度要求。</desc>
+<rect width="1200" height="900" fill="#FFFFFF"/>
+
+<text x="600" y="64" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="30" font-weight="600" fill="#1A1A1A">核心判断 · 分子是图，不是图片</text>
+<text x="600" y="100" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#666666">整个项目成立的前提，也是「两端往中间搭」的依据</text>
+
+<rect x="100" y="140" width="1000" height="140" rx="16" fill="#EEEDFE" stroke="#7F77DD" stroke-width="1.5"/>
+<rect x="100" y="140" width="8" height="140" rx="4" fill="#534AB7"/>
+<text x="600" y="192" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="26" font-weight="600" fill="#3C3489">拓扑关系在不同绘画风格里一定是「相同」，不是「相似」</text>
+<text x="600" y="236" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="17" fill="#534AB7">同一分子无论怎么画，图的关系不变</text>
+<text x="600" y="264" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#7F77DD">所以拓扑明显不同的，可以安全剪掉 —— 这是唯一能当硬条件的证据</text>
+
+<rect x="200" y="316" width="800" height="100" rx="14" fill="#FAEEDA" stroke="#BA7517" stroke-width="1"/>
+<text x="600" y="352" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="19" font-weight="600" fill="#633806">现实约束：从古早图提拓扑，精度做不到完全一致</text>
+<text x="600" y="390" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#854F0B">于是退成「定性前置剪枝」：只剪掉明显不同的，不追求精确匹配</text>
+
+<rect x="100" y="452" width="480" height="170" rx="16" fill="#E6F1FB" stroke="#378ADD" stroke-width="1.2"/>
+<circle cx="146" cy="498" r="20" fill="#185FA5"/>
+<text x="146" y="498" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="17" font-weight="600" fill="#FFFFFF">1</text>
+<text x="180" y="504" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#0C447C">思路一 · 生成 → 检索</text>
+<text x="130" y="548" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#185FA5">不生成结构式，改成从数据库检索候选</text>
+<text x="130" y="580" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#185FA5">再拿候选去比对，把生成问题变成查找问题</text>
+
+<rect x="620" y="452" width="480" height="170" rx="16" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.2"/>
+<circle cx="666" cy="498" r="20" fill="#0F6E56"/>
+<text x="666" y="498" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="17" font-weight="600" fill="#FFFFFF">2</text>
+<text x="700" y="504" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="20" font-weight="600" fill="#085041">思路二 · 两边搭桥</text>
+<text x="650" y="548" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#0F6E56">从精确端往不精确端搭，比从古早图一路往前推</text>
+<text x="650" y="580" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#0F6E56">对每一步的精度要求都更低，才跑得通</text>
+
+<rect x="200" y="656" width="800" height="110" rx="16" fill="#F5F3FF" stroke="#7F77DD" stroke-width="1"/>
+<text x="600" y="694" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="19" font-weight="600" fill="#3C3489">连接矩阵 = 图的关系 = 数学语言</text>
+<text x="600" y="728" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#534AB7">既用来算拓扑指标，也用来驱动仿古渲染</text>
+<text x="600" y="752" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="15" fill="#7F77DD">有没有环、几元环都能从矩阵查出来，所以拓扑能当查询条件</text>
+
+<rect x="100" y="798" width="1000" height="70" rx="14" fill="#FCEBEB" stroke="#E24B4A" stroke-width="1"/>
+<text x="600" y="832" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="18" font-weight="600" fill="#791F1F">一句话总结</text>
+<text x="600" y="856" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,PingFang SC,Microsoft YaHei,sans-serif" font-size="16" fill="#A32D2D">无论怎么画，图的关系不变 → 用拓扑把「明显不同」的先剪掉 → 把每一步精度要求降下来</text>
+</svg>
