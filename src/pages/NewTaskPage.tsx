@@ -1,62 +1,46 @@
 import { useState } from 'react'
 
 export default function NewTaskPage() {
-  const [pathMode, setPathMode] = useState(false)
-  const [srcStyle, setSrcStyle] = useState('pdf')
-  const [imgStyle, setImgStyle] = useState('按文件名年份推断')
-  const [runMode, setRunMode] = useState('只跑二值')
-
+  const [source, setSource] = useState<'pdf' | 'image' | 'folder'>('pdf')
   return (
-    <>
-      <h2>新建任务</h2>
-      <div className="grid2">
-        <div className="card">
-          <div style={{ fontWeight: 600, marginBottom: 10 }}>文献 PDF</div>
-          <div style={{ border: '1px dashed var(--border)', borderRadius: 6, padding: 22, textAlign: 'center', color: 'var(--muted)' }}>
-            拖入 PDF · ≤ 100 MB
-          </div>
-          <div className="row" style={{ marginTop: 12 }}>
-            <p className="lab" style={{ margin: 0 }}>风格</p>
-            <select value={srcStyle} onChange={(e) => setSrcStyle(e.target.value)}>
-              <option value="pdf">自动识别 · 可改</option>
-            </select>
-          </div>
-          <button className="act" style={{ marginTop: 12, width: '100%' }}>提交任务</button>
+    <div className="page on">
+      <h1 className="title">新建任务</h1>
+      <div className="card">
+        <div style={{ fontWeight: 600, marginBottom: 12 }}>来源</div>
+        <div className="seg" style={{ marginBottom: 14 }}>
+          <button className={source === 'pdf' ? 'on' : ''} onClick={() => setSource('pdf')}>文献 PDF</button>
+          <button className={source === 'image' ? 'on' : ''} onClick={() => setSource('image')}>结构式图片</button>
+          <button className={source === 'folder' ? 'on' : ''} onClick={() => setSource('folder')}>文件夹路径</button>
         </div>
-
-        <div className="card">
-          <div style={{ fontWeight: 600, marginBottom: 10 }}>结构式图片 / 批量路径</div>
-          <div style={{ border: '1px dashed var(--border)', borderRadius: 6, padding: 16, textAlign: 'center', color: 'var(--muted)' }}>
-            拖入 PNG / JPG · 可多张
+        {source === 'folder' ? (
+          <div className="field">
+            <label title="里面的 PDF 逐个解析；数据仍存在工作区">文件夹路径</label>
+            <input defaultValue="F:\文献批量下载\pdfs" />
           </div>
-          <div style={{ marginTop: 10 }}>
-            <p className="lab" style={{ margin: '0 0 5px' }}>或指定路径（批量导入 → 瀑布流）</p>
-            <div className="row">
-              <input type="text" placeholder="粘贴目录路径" disabled={!pathMode} />
-              <button className="act" onClick={() => setPathMode(!pathMode)}>{pathMode ? '取消' : '选文件夹'}</button>
-            </div>
-            <p className="lab" style={{ margin: '5px 0 0' }}>私库路径可直读；本机目录需授权</p>
+        ) : (
+          <div style={{ border: '1px dashed var(--line)', borderRadius: 8, padding: 22, textAlign: 'center', color: 'var(--muted)' }}>
+            拖入{source === 'pdf' ? ' PDF · 可多张' : ' PNG/JPG · 可批量'}
           </div>
-          <div style={{ marginTop: 12 }}>
-            <p className="lab" style={{ margin: '0 0 5px' }}>风格</p>
-            <select value={imgStyle} onChange={(e) => setImgStyle(e.target.value)}>
-              <option>按文件名年份推断</option>
-              <option>试探多个年代，取效果最好</option>
-              <option>default_1970s</option>
-              <option>default_1980s</option>
-              <option>default_1960s</option>
-              <option>default_1950s</option>
-            </select>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <p className="lab" style={{ margin: '0 0 5px' }}>跑几种模式</p>
-            {['只跑二值', '只跑精确', '两种都跑（对照）'].map((m) => (
-              <span key={m} className={`pill ${runMode === m ? 'on' : ''}`} onClick={() => setRunMode(m)}>{m}</span>
-            ))}
-          </div>
-          <button className="act" style={{ marginTop: 12, width: '100%' }}>提交任务</button>
+        )}
+        <div className="field" style={{ marginTop: 14 }}>
+          <label>风格</label>
+          <select defaultValue="auto">
+            <option value="auto">自动识别（可改）</option>
+            <option value="manual">手动首选</option>
+            <option value="filename">按文件名年份推断</option>
+            <option value="probe">试探多个年代</option>
+          </select>
         </div>
+        <div className="field" style={{ marginTop: 14, maxWidth: 280 }}>
+          <label>运行模式</label>
+          <select defaultValue="binary">
+            <option value="binary">二值剪枝</option>
+            <option value="exact">精确剪枝</option>
+            <option value="both">两种都跑</option>
+          </select>
+        </div>
+        <div style={{ marginTop: 16 }}><button className="btn pri">提交任务</button></div>
       </div>
-    </>
+    </div>
   )
 }

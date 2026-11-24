@@ -1,73 +1,94 @@
 import { useState } from 'react'
 import type { Mode } from './types'
 import { STORAGE_KEYS } from './types'
-import ConnectPage from './pages/ConnectPage'
-import TasksPage from './pages/TasksPage'
+import WorkspacePage from './pages/WorkspacePage'
 import NewTaskPage from './pages/NewTaskPage'
-import ScreenPage from './pages/ScreenPage'
 import ReviewPage from './pages/ReviewPage'
-import RedrawPage from './pages/RedrawPage'
 import ReportPage from './pages/ReportPage'
+import ScreenPage from './pages/ScreenPage'
+import StylePage from './pages/StylePage'
+import TopoPage from './pages/TopoPage'
+import DiagPage from './pages/DiagPage'
+import LookupPage from './pages/LookupPage'
 import SettingsPage from './pages/SettingsPage'
 
-export type PageId = 'connect' | 'tasks' | 'new' | 'screen' | 'review' | 'redraw' | 'report' | 'settings'
+export type PageId = 'work' | 'new' | 'review' | 'report' | 'screen' | 'style' | 'topo' | 'diag' | 'lookup' | 'settings'
 
-const NAV: { id: PageId; label: string; trainOnly?: boolean }[] = [
-  { id: 'connect', label: '1 连接' },
-  { id: 'tasks', label: '2 任务' },
-  { id: 'new', label: '3 新建' },
-  { id: 'screen', label: '4 结构式筛选', trainOnly: true },
-  { id: 'review', label: '5 审阅' },
-  { id: 'report', label: '6 报告' },
-  { id: 'settings', label: '7 设置' },
+type NavItem = { id: PageId; label: string; trainOnly?: boolean }
+
+const WORK_NAV: NavItem[] = [
+  { id: 'work', label: '工作区' },
+  { id: 'new', label: '新建任务' },
+  { id: 'review', label: '审阅' },
+  { id: 'report', label: '报告' },
+]
+const TRAIN_NAV: NavItem[] = [
+  { id: 'screen', label: '结构式筛选' },
+  { id: 'style', label: '风格评审' },
+  { id: 'topo', label: '拓扑标注' },
+  { id: 'diag', label: '归因对比' },
 ]
 
 export default function App() {
   const [mode, setMode] = useState<Mode>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.mode)
-    return saved === 'use' || saved === 'train' ? saved : 'train'
+    return saved === 'train' ? 'train' : 'use'
   })
-  const [page, setPage] = useState<PageId>('connect')
+  const [dev, setDev] = useState(false)
+  const [page, setPage] = useState<PageId>('work')
 
-  const go = (id: PageId) => {
-    if (mode === 'use' && id === 'screen') return
-    setPage(id)
-  }
-
+  const go = (id: PageId) => setPage(id)
   const switchMode = (m: Mode) => {
     setMode(m)
     localStorage.setItem(STORAGE_KEYS.mode, m)
-    if (m === 'use' && page === 'screen') setPage('tasks')
+    if (m === 'use') {
+      setDev(false)
+      if (page === 'screen' || page === 'style' || page === 'topo' || page === 'diag' || page === 'lookup') setPage('work')
+    }
   }
 
   const pages: Record<PageId, React.ReactNode> = {
-    connect: <ConnectPage />,
-    tasks: <TasksPage go={go} />,
+    work: <WorkspacePage />,
     new: <NewTaskPage />,
+    review: <ReviewPage mode={mode} go={go} />,
+    report: <ReportPage />,
     screen: <ScreenPage />,
-    review: <ReviewPage go={go} />,
-    redraw: <RedrawPage go={go} />,
-    report: <ReportPage mode={mode} />,
+    style: <StylePage />,
+    topo: <TopoPage />,
+    diag: <DiagPage />,
+    lookup: <LookupPage />,
     settings: <SettingsPage />,
   }
 
   return (
-    <>
-      <div className="top">
-        <div className="logo">C</div>
-        <span className="top-title">CSD</span>
-        <span className="lab" style={{ margin: 0 }}>界面原型</span>
-        <div className="mode">
-          <button className={mode === 'use' ? 'on' : ''} onClick={() => switchMode('use')}>使用模式</button>
-          <button className={mode === 'train' ? 'on' : ''} onClick={() => switchMode('train')}>训练模式</button>
+    <div className={`app ${dev ? 'devon' : ''}`}>
+      <aside className="side">
+        <div className="seg small" style={{ marginBottom: 14 }}>
+          <button className={mode === 'use' ? 'on' : ''} onClick={() => switchMode('use')}>使用</button>
+          <button className={mode === 'train' ? 'on' : ''} onClick={() => switchMode('train')}>训练</button>
         </div>
-      </div>
-      <div className="nav">
-        {NAV.filter((n) => !(mode === 'use' && n.trainOnly)).map((n) => (
-          <button key={n.id} className={page === n.id ? 'on' : ''} onClick={() => go(n.id)}>{n.label}</button>
+        {mode === 'train' && (
+          <label className="side-dev">
+            开发者模式
+            <input type="checkbox" checked={dev} onChange={(e) => setDev(e.target.checked)} />
+          </label>
+        )}
+        <div className="navgrp">工作</div>
+        {WORK_NAV.map((n) => (
+          <button key={n.id} className={`nav ${page === n.id ? 'on' : ''}`} onClick={() => go(n.id)}>{n.label}</button>
         ))}
-      </div>
-      <div className="page">{pages[page]}</div>
-    </>
+        {mode === 'train' && (
+          <>
+            <div className="navgrp">训练</div>
+            {TRAIN_NAV.map((n) => (
+              <button key={n.id} className={`nav ${page === n.id ? 'on' : ''}`} onClick={() => go(n.id)}>{n.label}</button>
+            ))}
+          </>
+        )}
+        <div className="navgrp">系统</div>
+        <button className={`nav ${page === 'settings' ? 'on' : ''}`} onClick={() => go('settings')}>设置</button>
+      </aside>
+      <div className="main">{pages[page]}</div>
+    </div>
   )
 }

@@ -1,54 +1,44 @@
 import { useState } from 'react'
-import type { Mode } from '../types'
-import { MOCK_REPORT, MOCK_EXPORT } from '../mock'
 
-export default function ReportPage({ mode }: { mode: Mode }) {
-  const [tab, setTab] = useState<'final' | 'train'>('final')
+const ROWS = [
+  { id: 'Bayreuther1973_fig3', year: '1973', smiles: 'CC(=O)Nc1ccccc1', doi: '10.1002/…' },
+  { id: 'Adams1918_fig1', year: '1918', smiles: 'OC(=O)c1ccccc1', doi: '待复核' },
+]
+
+export default function ReportPage() {
+  const [copied, setCopied] = useState<number | null>(null)
+  const copy = (i: number, text: string) => {
+    if (navigator.clipboard) void navigator.clipboard.writeText(text)
+    setCopied(i)
+    window.setTimeout(() => setCopied(null), 1200)
+  }
   return (
-    <>
-      <h2>任务报告</h2>
-      <div style={{ marginBottom: 12 }}>
-        <span className={`pill ${tab === 'final' ? 'on' : ''}`} onClick={() => setTab('final')}>假古董与 SMILES</span>
-        {mode === 'train' && (
-          <span className={`pill ${tab === 'train' ? 'on' : ''}`} onClick={() => setTab('train')}>训练回流数据</span>
-        )}
+    <div className="page on">
+      <h1 className="title">报告</h1>
+      <div className="card">
+        <table>
+          <thead><tr><th>原图</th><th>年份</th><th>假古董 SMILES</th><th>可追溯</th></tr></thead>
+          <tbody>
+            {ROWS.map((r, i) => (
+              <tr key={r.id}>
+                <td>{r.id}</td>
+                <td>{r.year}</td>
+                <td>{r.smiles}<button className="btn copy" onClick={() => copy(i, r.smiles)}>{copied === i ? '已复制' : '复制'}</button></td>
+                <td>{r.doi}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 16 }}><button className="btn pri">导出</button></div>
+        <div className="devpanel">
+          <b>输出这一段的中间产物</b>
+          <div className="steps">
+            <div className="step"><b>输入</b><span>人工判定</span></div>
+            <div className="step"><b>中间产物</b><span>重画→邻接矩阵</span></div>
+            <div className="step"><b>输出</b><span>SMILES 清单</span></div>
+          </div>
+        </div>
       </div>
-
-      {tab === 'final' ? (
-        <>
-          <p className="sub">可入库的结构式</p>
-          <div className="grid4" style={{ marginBottom: 14 }}>
-            {MOCK_REPORT.map((r) => (
-              <div key={r.year} className="card" style={{ margin: 0, background: 'var(--panel)' }}>
-                <p className="lab" style={{ margin: 0 }}>{r.year}</p>
-                <div style={{ fontSize: 22, fontWeight: 600 }}>{r.count}</div>
-              </div>
-            ))}
-          </div>
-          {MOCK_EXPORT.map((e) => (
-            <div key={e.figure_id} className="card between">
-              <span className="mono">{e.figure_id}</span>
-              <span className="info">{e.source} · {e.result}</span>
-            </div>
-          ))}
-          <button className="act">导出 CSV</button>
-        </>
-      ) : (
-        <>
-          <p className="sub">拓扑准确度 · 双模式对比</p>
-          <div className="grid2">
-            {['模式 A · 二值', '模式 B · 精确'].map((m) => (
-              <div key={m} className="card">
-                <div style={{ fontWeight: 600 }}>{m}</div>
-                <p className="lab" style={{ marginTop: 8 }}>拓扑准确度 —</p>
-                <p className="lab">hit@1 —</p>
-                <p className="lab" style={{ margin: 0 }}>hit@3 —</p>
-              </div>
-            ))}
-          </div>
-          <button className="act">重跑对比</button>
-        </>
-      )}
-    </>
+    </div>
   )
 }
