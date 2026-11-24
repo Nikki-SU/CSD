@@ -130,10 +130,12 @@ def extract_features(image_path: str | Path, year: int | None = None) -> dict:
     ink = binary > 0
     density = float(ink.mean())
 
+    # 线宽 = 单行内水平墨迹段的宽度中位数（不是整列跨度——那会把整个分子宽度当线宽）
     widths = []
-    cols = np.where(ink.any(axis=0))[0]
-    for run in _runs(cols):
-        widths.append(run[1] - run[0] + 1)
+    for row in ink:
+        cols = np.where(row)[0]
+        for start, end in _runs(cols):
+            widths.append(end - start + 1)
     stroke = float(np.median(widths)) if widths else 1.0
 
     try:
@@ -480,10 +482,17 @@ def render_smiles(smiles: str, style, out_png, segment_styles: dict | None = Non
     rdDepictor.Compute2DCoords(mol)
 
     opts = Draw.MolDrawOptions()
-    opts.lineWidth = params["line_width"]
-    opts.fontSize = params["font_size"]
+    # RDKit 新版属性名：bondLineWidth / fixedFontSize（旧版 lineWidth/fontSize 已废弃）
+    for name in ("bondLineWidth", "lineWidth"):
+        if hasattr(opts, name):
+            setattr(opts, name, float(params["line_width"]))
+            break
+    for name in ("fixedFontSize", "fontSize"):
+        if hasattr(opts, name):
+            setattr(opts, name, int(params["font_size"]))
+            break
     if params["bond_length"] > 0:
-        opts.fixedBondLength = params["bond_length"]
+        opts.fixedBondLength = int(params["bond_length"])
     if params["mono"] and hasattr(opts, "useBWAtomPalette"):
         opts.useBWAtomPalette()
     font_path = Path(params["font_path"])

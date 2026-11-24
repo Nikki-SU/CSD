@@ -51,6 +51,23 @@ python -m training.pipeline run --root <工作区> --step match   # ⑤ 匹配�
 ① 的批量取图用 `pipeline/cli.py`（sample/article/cell），需环境变量 `MINERU_API_KEY`。
 MinerU 限额约 1000 页/天（多账号可提到 3000），6569+ 张图要排期。
 
+### 工作区与训练轮次（动态更新 / 留出集 / 交叉验证）
+```
+python -m training.workspace init --root <工作区> --pdf-dir <PDF目录>
+python -m training.workspace sync --root <工作区>       # 增量补新文献，已处理的不重跑
+python -m training.workspace new-round --root <工作区> --note "第2轮描述"
+python -m training.workspace split --root <工作区> --round 1 --folds 5
+```
+每轮样本写 `rounds/round_NNN/samples.json`（人审结果），split 划分训练集 / 留出集（不参与训练调参）/ 交叉验证折叠 / 负样本池。
+人审剔除的图进负样本池，回流训练分类器。
+
+### 页级判据调参（baseline 对比）
+```
+python -m training.calibrate run --pdf-dir <PDF目录> --baseline <baseline.json> --out <best.json>
+```
+baseline.json 记录现成模型（MolDet/DocLayout）标注的"哪些页有结构式"；
+自动网格搜 page_scan 判据参数，召回优先（F2），让手写判据逼近 baseline。
+
 拓扑指标只用环数 / 环大小 / 标签，**不用边数**；电荷 ⊕ 不算环；跨时代字体用分档字符模板，不靠通用 OCR。
 
 ## 部署

@@ -21,8 +21,19 @@ import pymupdf
 CAPTION_RE = re.compile(r"(?im)^\s*(fig\.?|figure|scheme|chart)\b")
 
 
-def page_profile(page: "pymupdf.Page", dpi: int = 150) -> dict:
-    """返回单页的图/文特征与判定。"""
+DEFAULT_PARAMS = {
+    "kernel_ratio": 0.007,   # 闭运算核 / 页宽
+    "h_low": 4.0,            # 中块高度下限（× 字高）
+    "h_high": 20.0,          # 中块高度上限（× 字高）
+    "w_hi_ratio": 0.5,       # 中块宽度上限 / 页宽（排除整栏文字）
+    "w_lo_ratio": 0.06,      # 中块宽度下限 / 页宽
+    "area_min": 1500,        # 中块最小面积（像素）
+}
+
+
+def page_profile(page: "pymupdf.Page", dpi: int = 150, params: dict | None = None) -> dict:
+    """返回单页的图/文特征与判定。params 可覆盖判据参数（供自动调参）。"""
+    p = {**DEFAULT_PARAMS, **(params or {})}
     started = time.time()
     text = page.get_text() or ""
     pix = page.get_pixmap(dpi=dpi)
@@ -38,18 +49,17 @@ def page_profile(page: "pymupdf.Page", dpi: int = 150) -> dict:
     big_blocks = int(((heights > 2.5 * median_h) & (areas > 800)).sum()) if median_h else 0
 
     # 老扫描件结构式夹在正文里、无图注、键线是断的：原始连通域抓不到。
-    # 闭运算把断线连成块后，结构式表现为「中等块」：宽<栏宽一半、高约 3~10 行字高。
-    # 判据来自实图量测（1937 JACS 第1页 3 个结构式均命中），非拍脑袋。
-    k = max(5, int(gray.shape[1] * 0.007))
+    # 闭运算把断线连成块后，结构式表现为「中等块」（参数可自动调，见 calibrate.py）。
+    k = max(5, int(gray.shape[1] * p["kernel_ratio"]))
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k, k))
     closed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
     _, _, cstats, _ = cv2.connectedComponentsWithStats(closed, 8)
     cw = cstats[1:, cv2.CC_STAT_WIDTH]
     ch = cstats[1:, cv2.CC_STAT_HEIGHT]
     ca = cstats[1:, cv2.CC_STAT_AREA]
-    mid_bands = (ch > 4 * median_h) & (ch < 20 * median_h) if median_h else np.zeros(len(ca), bool)
-    mid_blocks = int((mid_bands & (cw < gray.shape[1] * 0.5) & (cw > gray.shape[1] * 0.06)
-                      & (ca > 1500)).sum())
+    mid_bands = ((ch > p["h_low"] * median_h) & (ch < p["h_high"] * median_h)) if median_h else np.zeros(len(ca), bool)
+    mid_blocks = int((mid_bands & (cw < gray.shape[1] * p["w_hi_ratio"]) & (cw > gray.shape[1] * p["w_lo_ratio"])
+                      & (ca > p["area_min"])).sum())
 
     has_text = bool(text.strip())
     caption_hit = bool(CAPTION_RE.search(text))
