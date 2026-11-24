@@ -51,6 +51,9 @@ export default function BootstrapGuide({ onRetry }: { onRetry: () => void }) {
         <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 10px' }}>
           点按钮，选一个<strong>新建的空文件夹</strong>（比如「CSD」）。后端文件会自动写进去，之后你的文献和结果也都放在这里。
         </p>
+        <p style={{ fontSize: 13, color: '#b45309', margin: '0 0 10px' }}>
+          <strong>文件夹名字和路径必须用英文</strong>（例如 <code>C:\CSD</code>），不能用中文——Python 安装器不支持中文路径。
+        </p>
         {pick !== 'unsupported' && (
           <button className="btn pri" onClick={() => void onPick()} disabled={pick === 'writing'}>
             {pick === 'writing' ? '写入中…' : pick === 'done' ? `已写入 ${written}/${BOOTSTRAP_FILES.length} 个文件（可重新写入）` : '选择文件夹并写入后端文件'}

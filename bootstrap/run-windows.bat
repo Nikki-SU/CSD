@@ -11,6 +11,10 @@ set "BASE=%UP%"
 goto findbase
 :base_ok
 cd /d "%BASE%"
+rem Miniconda installer rejects non-ASCII install paths (e.g. Chinese folder names).
+rem Check the current path and stop with a clear message instead of a cryptic unpack error.
+for /f "delims=" %%A in ('powershell -NoProfile -Command "$p='%CD%'; if ($p -match ''[^\\x00-\\x7F]'') { ''BAD'' } else { ''OK'' }"') do set "ASCII_CHECK=%%A"
+if /i "%ASCII_CHECK%"=="BAD" goto non_ascii_path
 rem Keep everything inside this folder: no pip cache, no __pycache__, no system writes.
 set "PYTHONDONTWRITEBYTECODE=1"
 set "PIP_NO_CACHE_DIR=1"
@@ -119,6 +123,15 @@ exit /b 0
 
 :base_missing
 echo [ERROR] requirements.txt not found above this folder. Put the launcher in the folder with requirements.txt.
+pause
+exit /b 1
+:non_ascii_path
+echo [ERROR] The folder path contains non-ASCII characters (e.g. Chinese).
+echo         The Python installer cannot install into such a path.
+echo.
+echo         Current path: %CD%
+echo         Please rename the folder to use English letters only (e.g. CSD),
+echo         or move it to an English path like C:\CSD, then run again.
 pause
 exit /b 1
 :download_failed
