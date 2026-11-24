@@ -23,35 +23,34 @@ echo            Nothing is installed system-wide. Delete the folder to remove al
 echo  Backend: http://127.0.0.1:8765
 echo ============================================
 
-set "PYTAG=20261026"
-set "PYVER=3.12.16"
-set "GHBASE=https://github.com/astral-sh/python-build-standalone/releases/download/%PYTAG%"
-set "PKG=cpython-%PYVER%+%PYTAG%-x86_64-pc-windows-msvc-install_only.tar.gz"
-set "SHA=590dfcbe3a34c07301e6332e13e2188b98655cd072b08afa45a7998dc4c22bc5"
 set "PY=.runtime\python.exe"
+set "MC=Miniconda3-py312_26.9.4-1-Windows-x86_64.exe"
 
 if exist "%PY%" goto have_runtime
 
 echo.
-echo [1/5] Preparing a private Python runtime (one time, about 50 MB)
-echo        You do NOT need Python installed on this computer.
+echo [1/5] Preparing a private Python runtime (one time, about 90 MB)
+echo        From Chinese mirrors - no VPN needed. You do NOT need Python installed.
 if not exist ".runtime" mkdir ".runtime"
 
-call :try_download "%GHBASE%/%PKG%"
+where curl >nul 2>nul
+if errorlevel 1 goto no_curl
+echo        Downloading from TUNA mirror ...
+curl -fL --retry 2 -o "%MC%" "https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/%MC%"
 if not errorlevel 1 goto unpack
-call :try_download "https://gh-proxy.com/%GHBASE%/%PKG%"
+if exist "%MC%" del /q "%MC%"
+echo        TUNA failed, trying Huawei Cloud ...
+curl -fL --retry 2 -o "%MC%" "https://mirrors.huaweicloud.com/anaconda/miniconda/%MC%"
 if not errorlevel 1 goto unpack
-call :try_download "https://ghproxy.net/%GHBASE%/%PKG%"
-if not errorlevel 1 goto unpack
+if exist "%MC%" del /q "%MC%"
 goto download_failed
 
 :unpack
-echo [2/5] Unpacking runtime ...
-where tar >nul 2>nul
-if errorlevel 1 goto no_tar
-tar -xzf "python-runtime.tar.gz" -C ".runtime" --strip-components=1
+echo [2/5] Installing Python into .runtime (silent, nothing system-wide) ...
+rem JustMe + RegisterPython=0 + no PATH: nothing is written system-wide. /D must be last, no quotes.
+"%MC%" /InstallationType=JustMe /RegisterPython=0 /S /D=%CD%\.runtime
 if errorlevel 1 goto unpack_failed
-del /q "python-runtime.tar.gz"
+if exist "%MC%" del /q "%MC%"
 
 :have_runtime
 if not exist "%PY%" goto runtime_missing
@@ -113,17 +112,6 @@ if errorlevel 86 goto restart
 if errorlevel 1 goto backend_failed
 exit /b 0
 
-:try_download
-powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri '%~1' -OutFile 'python-runtime.tar.gz' -TimeoutSec 120"
-if errorlevel 1 exit /b 1
-for /f %%a in ('powershell -NoProfile -Command "(Get-FileHash 'python-runtime.tar.gz' -Algorithm SHA256).Hash.ToLower()"') do set "GOT=%%a"
-if /i not "%GOT%"=="%SHA%" (
-  echo   Hash mismatch, trying next source ...
-  del /q "python-runtime.tar.gz"
-  exit /b 1
-)
-exit /b 0
-
 :restart
 echo Backend requested restart ...
 start "" "%~dp0start-windows.bat"
@@ -134,11 +122,12 @@ echo [ERROR] requirements.txt not found above this folder. Put the launcher in t
 pause
 exit /b 1
 :download_failed
-echo [ERROR] Cannot download Python runtime. Check internet or VPN.
+echo [ERROR] Cannot download Python runtime from TUNA or Huawei Cloud mirrors.
+echo         Check your network connection to Chinese mirrors.
 pause
 exit /b 1
-:no_tar
-echo [ERROR] tar not found. Need Windows 10 1803+ or install bsdtar.
+:no_curl
+echo [ERROR] curl.exe not found. Need Windows 10 1803+ (curl is built in).
 pause
 exit /b 1
 :unpack_failed
