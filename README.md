@@ -15,6 +15,13 @@
 数据落项目内 `data/`，不进 GitHub。**要彻底卸载：双击 `bootstrap\uninstall-windows.bat` 输 YES**，
 删掉 `.runtime` 和数据即可，电脑回到运行前状态（源码和 BAT 保留）。
 
+**MolDet 权重**：首次启动自动下到 `models/`（约 50MB，带 SHA 校验，HF 直连/镜像多源回退）。
+这个基础权重固定不变，不随训练更新。
+
+**演示流程**：拷 PDF 数据包 → 打开 GitHub Pages → 双击 `bootstrap\start-windows.bat` 按提示启动
+→ 新建任务填文件夹路径 → 结构式筛选瀑布流剔除。训练产物（分类器/字符模板/校准参数/风格档位）
+放 `assets/`，每次训练后推送到 GitHub，演示机 pull 即为最新版（详见 `assets/README.md`）。
+
 换工作区：把整个项目文件夹复制到新位置再启动（`.runtime` 跟着走，不用重新下载）。
 
 ## 训练管道

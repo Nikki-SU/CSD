@@ -23,7 +23,7 @@ set "PY=.runtime\python.exe"
 if exist "%PY%" goto have_runtime
 
 echo.
-echo [1/4] Preparing a private Python runtime (one time, about 50 MB)
+echo [1/5] Preparing a private Python runtime (one time, about 50 MB)
 echo        You do NOT need Python installed on this computer.
 if not exist ".runtime" mkdir ".runtime"
 
@@ -36,7 +36,7 @@ if not errorlevel 1 goto unpack
 goto download_failed
 
 :unpack
-echo [2/4] Unpacking runtime ...
+echo [2/5] Unpacking runtime ...
 where tar >nul 2>nul
 if errorlevel 1 goto no_tar
 tar -xzf "python-runtime.tar.gz" -C ".runtime" --strip-components=1
@@ -47,7 +47,7 @@ del /q "python-runtime.tar.gz"
 if not exist "%PY%" goto runtime_missing
 
 :install_deps
-echo [3/4] Installing components into the private runtime (first run only)
+echo [3/5] Installing components into the private runtime (first run only)
 echo        All packages go into .runtime - nothing is written to the system Python.
 set "PIPFLAGS=--disable-pip-version-check --no-warn-script-location --no-cache-dir --timeout 20 --retries 2"
 "%PY%" -m pip install %PIPFLAGS% -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -57,9 +57,13 @@ echo        Mirror failed, retrying with the official index ...
 if errorlevel 1 goto pip_failed
 
 :check_native
-echo [4/4] Checking native deps ...
+echo [4/5] Checking native deps ...
 "%PY%" -c "import cv2, numpy, pymupdf; print('core ok')"
 if errorlevel 1 goto native_failed
+
+echo [5/5] Preparing MolDet model weight (first run downloads ~50 MB) ...
+"%PY%" bootstrap\fetch_models.py
+if errorlevel 1 goto model_failed
 
 if defined CSD_DATA_DIR (
   echo Data dir: %CSD_DATA_DIR%
@@ -113,6 +117,10 @@ pause
 exit /b 1
 :native_failed
 echo [ERROR] Core deps failed to import. Try: pip install opencv-python pymupdf
+pause
+exit /b 1
+:model_failed
+echo [ERROR] MolDet weight download failed. See message above.
 pause
 exit /b 1
 :backend_failed

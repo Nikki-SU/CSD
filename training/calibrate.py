@@ -85,7 +85,7 @@ def main() -> None:
     ap.add_argument("--pdf-dir", required=True)
     ap.add_argument("--baseline", required=True, help="baseline 标注 JSON")
     ap.add_argument("--params", help="score 用：单组参数 JSON")
-    ap.add_argument("--out", default="training/calibration.json")
+    ap.add_argument("--out", default="assets/calibration.json")
     ap.add_argument("--dpi", type=int, default=150)
     args = ap.parse_args()
     pdf_dir = Path(args.pdf_dir).resolve()
