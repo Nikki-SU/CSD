@@ -8,10 +8,13 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
 from .article import process_article
+from .acquire import acquire_cell
+from .batch_download import batch_download
 from .cell import run_cell
 from .config import Config
 from .sample import parse_journals, sample_cell, write_rows
@@ -64,6 +67,106 @@ def _cmd_article(args: argparse.Namespace) -> int:
     return 2
 
 
+def _cmd_acquire(args: argparse.Namespace) -> int:
+    config = Config.from_env()
+    cells = [c for c in parse_journals() if c.active_in(args.year)]
+    if args.journal:
+        cells = [c for c in cells if args.journal.lower() in c.journal.lower()]
+    if args.era:
+        cells = [c for c in cells if c.era == args.era]
+    if not cells:
+        print("没有匹配的刊物/年份，检查 JOURNALS_BY_ERA.md 的有效年段。", file=sys.stderr)
+        return 1
+    out = Path(args.out) if args.out else config.workdir / "acquire"
+    for cell in cells:
+        summary = acquire_cell(
+            cell, args.year, args.pdf_dir, out, config=config,
+            limit=args.limit, seed_suffix=args.seed,
+        )
+        print(
+            f"{cell.journal} {args.year}: 抽样 {summary['sampled']}，"
+            f"下载 {summary['downloaded']}，已有 {summary['already_have']}，"
+            f"待人工 {summary['pending']}"
+        )
+        print(f"  明细: {summary['acquire_path']}")
+        if summary["pending"]:
+            print(f"  清单: {summary['manual_path']}")
+    return 0
+
+
+def _cmd_batch(args: argparse.Namespace) -> int:
+    config = Config.from_env()
+    out = Path(args.out) if args.out else config.workdir / "batch"
+    summary = batch_download(
+        args.rows, args.pdf_dir, out,
+        cookies_path=args.cookies, config=config, delay=args.delay,
+    )
+    print(
+        f"总计 {summary['total']}：下载 {summary['downloaded']}，"
+        f"已有 {summary['already_have']}，失败 {summary['failed']}"
+    )
+    print(f"明细: {summary['result_path']}")
+    if not summary["cookie_names"]:
+        print("警告：未读到 cookies，闭源站会返回 401/403")
+    return 0
+
+
+def _cmd_pagescan(args: argparse.Namespace) -> int:
+    from .page_scan import scan_pdf
+
+    paths = [Path(args.pdf)]
+    pdfs: list[Path] = []
+    for path in paths:
+        if path.is_dir():
+            pdfs.extend(sorted(path.rglob("*.pdf")))
+        else:
+            pdfs.append(path)
+    rows: list[dict] = []
+    for pdf in pdfs:
+        rows.extend(scan_pdf(pdf, dpi=args.dpi))
+    out = Path(args.out) if args.out else Path("pagescan.csv")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", encoding="utf-8-sig", newline="") as handle:
+        fields = ["pdf", "page", "chars", "images", "drawings",
+                  "median_line_h", "big_blocks", "caption_hit", "has_figure", "ms"]
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+    figure_pages = sum(1 for r in rows if r["has_figure"])
+    print(f"{len(pdfs)} 篇 / {len(rows)} 页，判为有图 {figure_pages} 页，"
+          f"可省 MinerU {len(rows) - figure_pages} 页")
+    print(f"明细: {out}")
+    return 0
+
+
+def _cmd_browser(args: argparse.Namespace) -> int:
+    from .browser_fetch import fetch_cell as run_browser
+
+    config = Config.from_env()
+    cells = [c for c in parse_journals() if c.active_in(args.year)]
+    if args.journal:
+        cells = [c for c in cells if args.journal.lower() in c.journal.lower()]
+    if args.era:
+        cells = [c for c in cells if c.era == args.era]
+    if not cells:
+        print("没有匹配的刊物/年份，检查 JOURNALS_BY_ERA.md 的有效年段。", file=sys.stderr)
+        return 1
+    out = Path(args.out) if args.out else config.workdir / "browser"
+    for cell in cells:
+        summary = run_browser(
+            cell, args.year, args.pdf_dir, out, config=config,
+            limit=args.limit, state_path=args.state,
+            wait_ms=args.wait, headless=args.headless,
+        )
+        print(
+            f"{cell.journal} {args.year}: 抽样 {summary['sampled']}，"
+            f"下载 {summary['downloaded']}，失败 {summary['failed']}，"
+            f"不支持 {summary['unsupported']}"
+        )
+        print(f"  明细: {summary['result_path']}")
+    return 0
+
+
 def _cmd_cell(args: argparse.Namespace) -> int:
     config = Config.from_env()
     cells = [c for c in parse_journals() if c.active_in(args.year)]
@@ -76,6 +179,12 @@ def _cmd_cell(args: argparse.Namespace) -> int:
         return 1
     out = Path(args.out) if args.out else config.workdir / "cells"
     for cell in cells:
+        if args.acquire:
+            summary = acquire_cell(cell, args.year, args.pdf_dir, out, config=config)
+            print(
+                f"{cell.journal} {args.year} 取全文: 下载 {summary['downloaded']}，"
+                f"待人工 {summary['pending']}"
+            )
         summary = run_cell(cell, args.year, args.pdf_dir, out, config=config)
         print(
             f"{cell.journal} {args.year}: accepted {summary['accepted']}/{summary['target']} "
@@ -112,7 +221,44 @@ def main(argv: list[str] | None = None) -> int:
     cell.add_argument("--journal", help="刊名子串过滤")
     cell.add_argument("--era", help="如 1970s")
     cell.add_argument("--out")
+    cell.add_argument("--acquire", action="store_true", help="先自动取一轮全文，再进入逐篇筛查")
     cell.set_defaults(func=_cmd_cell)
+
+    acquire = sub.add_parser("acquire", help="自动取全文；取不到的写待人工清单")
+    acquire.add_argument("--year", type=int, required=True)
+    acquire.add_argument("--pdf-dir", required=True)
+    acquire.add_argument("--journal", help="刊名子串过滤")
+    acquire.add_argument("--era", help="如 1970s")
+    acquire.add_argument("--limit", type=int, default=20)
+    acquire.add_argument("--seed", default="", help="抽样种子后缀，换一批候选时改这里")
+    acquire.add_argument("--out")
+    acquire.set_defaults(func=_cmd_acquire)
+
+    batch = sub.add_parser("batch", help="带登录态批量下载出版社 PDF")
+    batch.add_argument("--rows", required=True, help="含 doi 列的 CSV")
+    batch.add_argument("--pdf-dir", required=True)
+    batch.add_argument("--cookies", help="cookies.txt / Cookie 头 / Copy as cURL")
+    batch.add_argument("--out")
+    batch.add_argument("--delay", type=float, default=1.0)
+    batch.set_defaults(func=_cmd_batch)
+
+    browser = sub.add_parser("browser", help="真实浏览器过 JS 挑战，取免费 PDF")
+    browser.add_argument("--year", type=int, required=True)
+    browser.add_argument("--pdf-dir", required=True)
+    browser.add_argument("--journal", help="刊名子串过滤")
+    browser.add_argument("--era", help="如 1950s")
+    browser.add_argument("--limit", type=int, default=20)
+    browser.add_argument("--state", help="Playwright storage_state.json（登录态）")
+    browser.add_argument("--wait", type=int, default=5000, help="过挑战后等待毫秒数")
+    browser.add_argument("--headless", action="store_true")
+    browser.add_argument("--out")
+    browser.set_defaults(func=_cmd_browser)
+
+    pagescan = sub.add_parser("pagescan", help="页级判断有没有图（不调用 MinerU）")
+    pagescan.add_argument("--pdf", required=True, help="单个 PDF 或目录")
+    pagescan.add_argument("--dpi", type=int, default=150)
+    pagescan.add_argument("--out")
+    pagescan.set_defaults(func=_cmd_pagescan)
 
     args = parser.parse_args(argv)
     return args.func(args)

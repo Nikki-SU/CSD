@@ -63,10 +63,7 @@ export interface TopoCheck {
 }
 
 export const STORAGE_KEYS = {
-  pat: 'csd.pat',
-  owner: 'csd.owner',
-  repo: 'csd.repo',
-  branch: 'csd.branch',
+  baseUrl: 'csd.baseUrl',
   reviewer: 'csd.reviewer',
   mode: 'csd.mode',
 } as const

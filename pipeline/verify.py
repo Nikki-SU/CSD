@@ -25,14 +25,20 @@ def normalize_doi(doi: str) -> str:
 def crossref_metadata(doi: str, mailto: str | None = None, timeout: int = 60) -> dict:
     doi = normalize_doi(doi)
     params = {"mailto": mailto} if mailto else {}
-    resp = requests.get(
-        CROSSREF_URL.format(doi=doi),
-        params=params,
-        headers={"User-Agent": f"csd-pipeline/0.1 (mailto:{mailto or 'unknown'})"},
-        timeout=timeout,
-    )
-    resp.raise_for_status()
-    message = resp.json()["message"]
+    empty = {"doi": doi, "title": "", "journal": "", "year": None,
+             "volume": None, "issue": None, "page": None}
+    try:
+        resp = requests.get(
+            CROSSREF_URL.format(doi=doi),
+            params=params,
+            headers={"User-Agent": f"csd-pipeline/0.1 (mailto:{mailto or 'unknown'})"},
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+        message = resp.json()["message"]
+    except (requests.RequestException, ValueError, KeyError):
+        # 老文献常没有 DOI 记录；这里不崩，交给核验判 unreadable
+        return empty
     title = " ".join(message.get("title") or [])
     title = re.sub(r"<[^>]+>", "", title)  # Crossref 标题里会带 <scp> 等标记
     title = " ".join(title.split())
