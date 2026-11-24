@@ -35,6 +35,10 @@ except ImportError:  # 允许直接 python backend/server.py
     from worker import Worker
 
 APP_VERSION = "0.5.0"
+
+# 引导部署的四段版本号：任何嵌入文件（后端源码/启动器）改动后 bump 对应段。
+# 前端 bootstrapFiles.ts 里的 BUNDLE_VERSION 由 embed 脚本从这段读，比对后提示用户更新本地文件。
+VERSION = {"frontend": 1, "backend": 1, "model": 1, "data": 1}
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA = ROOT / "data"
 FRONTEND_DIST = ROOT / "dist" if (ROOT / "dist").exists() else ROOT / "frontend" / "dist"
@@ -397,9 +401,12 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/health":
             return self._json(200, {
-                "status": "ok", "version": APP_VERSION, "lan": _lan_mode,
+                "status": "ok", "version": APP_VERSION, "versions": VERSION, "lan": _lan_mode,
                 "data_dir": str(_data_root), "time": now_iso(),
             })
+
+        if path == "/api/version":
+            return self._json(200, VERSION)
 
         if path == "/api/jobs":
             status = (parse_qs(parsed.query).get("status") or [None])[0]
