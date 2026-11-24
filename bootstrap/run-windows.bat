@@ -12,9 +12,10 @@ goto findbase
 :base_ok
 cd /d "%BASE%"
 rem Miniconda installer rejects non-ASCII install paths (e.g. Chinese folder names).
-rem Check the current path and stop with a clear message instead of a cryptic unpack error.
-for /f "delims=" %%A in ('powershell -NoProfile -Command "$p='%CD%'; if ($p -match ''[^\\x00-\\x7F]'') { ''BAD'' } else { ''OK'' }"') do set "ASCII_CHECK=%%A"
-if /i "%ASCII_CHECK%"=="BAD" goto non_ascii_path
+rem Use exit code only (no output parsing) to avoid quoting pitfalls.
+set "CSD_CUR=%CD%"
+powershell -NoProfile -Command "if ($env:CSD_CUR -match '[\u0080-\uFFFF]') { exit 1 } else { exit 0 }"
+if errorlevel 1 goto non_ascii_path
 rem Keep everything inside this folder: no pip cache, no __pycache__, no system writes.
 set "PYTHONDONTWRITEBYTECODE=1"
 set "PIP_NO_CACHE_DIR=1"
