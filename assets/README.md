@@ -22,4 +22,7 @@
 
 ## 流程
 
-训练完 → 把上表的纯产物复制到这里 → commit + push（人来做）→ 演示机 pull 即最新版。
+**训练完自动回传**：`python -m training.pipeline run --step <训练步>` 结束后自动把纯产物回传到这里
+（`training/publish.py`），人不用手动拷——只需 `git commit + push`，演示机 pull 即最新版。
+也可单独跑 `python -m training.pipeline publish --root <工作区>`。
+回传时自动剥掉 `members` 原图索引、跳过 `_local.json`，数据不会进库。

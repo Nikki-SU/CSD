@@ -167,7 +167,7 @@ def run_step(root: Path, step: str) -> None:
 def main() -> None:
     import argparse
     ap = argparse.ArgumentParser(description="训练流程总调度")
-    ap.add_argument("cmd", choices=["init", "status", "run"])
+    ap.add_argument("cmd", choices=["init", "status", "run", "publish"])
     ap.add_argument("--root", required=True, help="工作区根目录")
     ap.add_argument("--step", choices=[k for k, _, _ in STEPS])
     args = ap.parse_args()
@@ -176,10 +176,16 @@ def main() -> None:
         init(root)
     elif args.cmd == "status":
         status(root)
+    elif args.cmd == "publish":
+        from .publish import publish
+        publish(root)
     else:
         if not args.step:
             raise SystemExit("run 需要 --step")
         run_step(root, args.step)
+        # 每步训练后自动回传纯产物到 assets/——人不用手动拷，只需最后 push
+        from .publish import publish
+        publish(root)
 
 
 if __name__ == "__main__":
