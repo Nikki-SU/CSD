@@ -79,8 +79,15 @@ def scan_pdf(pdf: str | Path, dpi: int = 150) -> list[dict]:
 
 
 def mineru_figure_pages(content_list: list[dict]) -> set[int]:
-    """MinerU 全量结果里的有图页（基准），页码从 1 起。"""
-    return {int(item.get("page_idx", 0)) + 1 for item in content_list if item.get("type") == "image"}
+    """MinerU 全量结果里的有图页（基准），页码从 1 起。
+
+    实测批注：结构式/反应式多数判为 image，但部分被判成 chart / equation。
+    只收 image 会漏，故一并纳入（保守基准，宁可高估有图页）。
+    MinerU 的 page_idx 从 0 起，bbox 归一化到 0-1000。
+    """
+    visual = {"image", "chart", "equation"}
+    return {int(item.get("page_idx", 0)) + 1 for item in content_list
+            if item.get("type") in visual}
 
 
 def compare(scan_rows: list[dict], baseline_pages: set[int]) -> dict:
