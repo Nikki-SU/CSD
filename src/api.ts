@@ -44,6 +44,15 @@ export interface JobItem {
   progress?: { stage: string; pct: number; message: string }
 }
 
+export async function probe(): Promise<boolean> {
+  try {
+    const res = await fetch(`${baseUrl()}/api/health`, { cache: 'no-store' })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 export const api = {
   health: () => request<{ status: string; version: string; data_dir: string }>('/api/health'),
   jobs: () => request<{ count: number; jobs: JobItem[] }>('/api/jobs'),

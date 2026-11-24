@@ -24,6 +24,8 @@ csd_download/
 .trae-html-share-packages/
 node_modules/
 dist/
+__pycache__/
+*.pyc
 *.tsbuildinfo
 *.local
 .DS_Store

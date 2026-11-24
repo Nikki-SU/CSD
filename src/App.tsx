@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Mode } from './types'
 import { STORAGE_KEYS } from './types'
+import { probe } from './api'
 import WorkspacePage from './pages/WorkspacePage'
 import NewTaskPage from './pages/NewTaskPage'
 import ReviewPage from './pages/ReviewPage'
@@ -36,6 +37,15 @@ export default function App() {
   })
   const [dev, setDev] = useState(false)
   const [page, setPage] = useState<PageId>('work')
+  const [backendUp, setBackendUp] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    const check = async () => { const ok = await probe(); if (alive) setBackendUp(ok) }
+    void check()
+    const t = window.setInterval(check, 3000)
+    return () => { alive = false; window.clearInterval(t) }
+  }, [])
 
   const go = (id: PageId) => setPage(id)
   const switchMode = (m: Mode) => {
@@ -58,6 +68,22 @@ export default function App() {
     diag: <DiagPage />,
     lookup: <LookupPage />,
     settings: <SettingsPage />,
+  }
+
+  if (!backendUp && page !== 'settings') {
+    return (
+      <div className="main" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <div className="card" style={{ maxWidth: 520, textAlign: 'center' }}>
+          <h1 className="title">本地后端未启动</h1>
+          <p style={{ color: 'var(--muted)', lineHeight: 1.8 }}>
+            双击项目目录 <b>bootstrap\start-windows.bat</b> 启动后端；
+            黑窗口保持打开即后端在运行。启动后本页自动连接。
+          </p>
+          <button className="btn" onClick={() => void probe().then(setBackendUp)}>重新检测</button>{' '}
+          <button className="btn" onClick={() => setPage('settings')}>设置后端地址</button>
+        </div>
+      </div>
+    )
   }
 
   return (

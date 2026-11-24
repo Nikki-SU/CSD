@@ -344,11 +344,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Access-Code")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
         for key, value in (extra or {}).items():
             self.send_header(key, value)
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
+
+    def do_OPTIONS(self) -> None:
+        self._send(204, b"")
 
     def _json(self, status: int, data) -> None:
         self._send(status, json.dumps(data, ensure_ascii=False).encode("utf-8"))
