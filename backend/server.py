@@ -484,6 +484,16 @@ class Handler(BaseHTTPRequestHandler):
             data = job_artifact(job_id, f"{name}.json")
             return self._json(200, data) if data is not None else self._error(404, "尚未生成")
 
+        # 单个结构式图的 A/B/C 候选（含 SMILES，供审阅页 + 重绘预置）
+        match = re.match(r"^/api/jobs/([^/]+)/candidates/([^/]+)$", path)
+        if match:
+            job_id, figure_id = match.group(1), match.group(2)
+            data = job_artifact(job_id, f"candidates/{figure_id}_candidates.json")
+            if data is None:
+                # 尚未跑过候选流程：返回明确的空结构，前端显示"候选未生成"
+                return self._json(200, {"figure_id": figure_id, "candidates": [], "generated": False})
+            return self._json(200, data)
+
         match = re.match(r"^/api/export/([^/]+)$", path)
         if match:
             if not self._write_allowed():
@@ -564,7 +574,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="csd-server")
     parser.add_argument("--host", default="")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--data-dir", default=str(DEFAULT_DATA))
+    # 引导部署时数据落在启动器所在目录；也支持 CSD_DATA_DIR 环境变量覆盖（测试/多实例）。
+    parser.add_argument("--data-dir", default=os.environ.get("CSD_DATA_DIR") or str(DEFAULT_DATA))
     parser.add_argument("--lan", action="store_true", help="绑 0.0.0.0，生成访问码")
     parser.add_argument("--dry-run", action="store_true", help="不调 MinerU，只跑核验与页处理")
     args = parser.parse_args()

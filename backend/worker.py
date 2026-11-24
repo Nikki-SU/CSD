@@ -92,8 +92,11 @@ class Worker:
     def _run_folder(self, job_id: str, job: dict, folder: Path, out_dir: Path) -> None:
         """文件夹任务：PDF 串行识别 → 结构式裁图合集 → 瀑布流。
 
-        用 MolDet 检分子结构式（第一批直接用现成模型攒数据），裁图落 thumbs/，
-        写 figures.json 供前端 ScreenPage 读取。剔除由前端回写 labels。
+        用 MolDet 检分子结构式（第一批直接用现成模型攒数据），裁图落 crops/（原图）
+        与 thumbs/（缩略图），写 figures.json 供前端读取。
+
+        裁图必须 300dpi：150dpi 下古早细线条的环会断、检测不出（实测 135×124 图
+        环数=0，270×248 图环数=1、环大小=6 正确）。下游拓扑识别与匹配都读 crops/。
         """
         import shutil
         from training.detect import load_model, detect_page, resolve_pdf
@@ -118,8 +121,12 @@ class Worker:
 
         thumbs = out_dir / "thumbs"
         thumbs.mkdir(parents=True, exist_ok=True)
+        crops = out_dir / "crops"
+        crops.mkdir(parents=True, exist_ok=True)
         import pymupdf, cv2, numpy as np
         figures = []
+        # MolDet 在 150dpi 上检测（速度），裁原图用 300dpi（环检测需要）
+        DETECT_DPI, CROP_DPI = 150, 300
         for i, pdf in enumerate(pdfs):
             pct = 5 + int(90 * (i + 1) / len(pdfs))
             self._progress(job_id, "detect", pct, f"识别 {i+1}/{len(pdfs)}: {pdf.name}")
@@ -128,21 +135,32 @@ class Worker:
                 for pinfo in [detect_page(model, page) for page in doc]:
                     if not pinfo["boxes"]:
                         continue
-                    pix = doc[pinfo["page"]-1].get_pixmap(dpi=150)
+                    pix = doc[pinfo["page"]-1].get_pixmap(dpi=DETECT_DPI)
                     arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
                     img = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR) if pix.n >= 3 else arr
+                    scale = CROP_DPI / DETECT_DPI
+                    if scale > 1:
+                        img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
                     for box in pinfo["boxes"]:
-                        x1, y1, x2, y2 = [int(v) for v in box["bbox"]]
-                        pad = 6
+                        x1, y1, x2, y2 = [int(v * scale) for v in box["bbox"]]
+                        pad = 6 * int(scale)
                         crop = img[max(0, y1-pad):min(img.shape[0], y2+pad),
                                    max(0, x1-pad):min(img.shape[1], x2+pad)]
                         if crop.size == 0:
                             continue
                         fid = f"p{pinfo['page']:03d}_f{len(figures):04d}"
-                        cv2.imwrite(str(thumbs / f"{fid}.png"), crop)
+                        cv2.imwrite(str(crops / f"{fid}.png"), crop)
+                        # 缩略图给瀑布流（限宽 320，保持比例）
+                        h, w = crop.shape[:2]
+                        if w > 320:
+                            th = cv2.resize(crop, (320, int(h * 320 / w)), interpolation=cv2.INTER_AREA)
+                        else:
+                            th = crop
+                        cv2.imwrite(str(thumbs / f"{fid}.png"), th)
                         figures.append({
                             "figure_id": fid,
-                            "image": f"thumbs/{fid}.png",
+                            "image": f"crops/{fid}.png",        # 原图：拓扑识别/匹配用
+                            "thumb": f"thumbs/{fid}.png",       # 缩略图：瀑布流用
                             "article": pdf.name,
                             "page": pinfo["page"],
                             "conf": round(float(box["conf"]), 3),
@@ -159,8 +177,61 @@ class Worker:
             "count": len(figures),
             "figures": figures,
         })
-        self._progress(job_id, "done", 100, f"完成：{len(pdfs)} 篇识别出 {len(figures)} 个结构式，待瀑布流筛选")
+
+        # 候选生成（两轮筛选）：拓扑筛 → 渲染假古董 → 比图 → A/B/C（带 SMILES）。
+        # 依赖本地 SMILES 拓扑索引；索引不存在时跳过并给出明确提示（不假装有候选）。
+        self._progress(job_id, "coarse", 95, f"生成候选：{len(figures)} 个结构式的两轮筛选")
+        made = self._build_candidates(job_id, figures, crops, out_dir)
+        self._progress(job_id, "done", 100,
+                       f"完成：{len(pdfs)} 篇识别出 {len(figures)} 个结构式，"
+                       f"{made} 个已生成 A/B/C 候选，待审阅")
         self._set_status(job_id, "done")
+
+    def _build_candidates(self, job_id: str, figures: list[dict], crops: Path, out_dir: Path) -> int:
+        """对每个结构式图跑两轮筛选，写 candidates/<fid>_candidates.json。返回成功数。"""
+        index_path = Path(self.data_root) / "library" / "index.json.gz"
+        if not index_path.exists():
+            print(f"[worker] 拓扑索引不存在（{index_path}），跳过候选生成。"
+                  f" 先跑 python -m training.build_library 再 build 索引。", flush=True)
+            return 0
+        try:
+            from training.library import TopoIndex
+            from training.candidates import build_candidates
+        except Exception as exc:
+            print(f"[worker] 导入候选模块失败: {exc}", flush=True)
+            return 0
+        try:
+            index = TopoIndex.load(index_path)
+        except Exception as exc:
+            print(f"[worker] 加载拓扑索引失败: {exc}", flush=True)
+            return 0
+
+        # 风格档：用 assets/style_profiles 里第一档；没有就用默认参数（不阻断）
+        style = {"name": "default", "line_width": 1.2, "font_size": 14,
+                 "bond_length": -1, "mono": True, "font_path": ""}
+        style_dir = Path(__file__).resolve().parent.parent / "assets" / "style_profiles"
+        if style_dir.exists():
+            for p in sorted(style_dir.glob("*.json")):
+                try:
+                    d = _read_json(p)
+                    if isinstance(d, dict) and "name" in d:
+                        style = d
+                        break
+                except Exception:
+                    continue
+
+        cand_root = out_dir / "candidates"
+        made = 0
+        for f in figures:
+            img = crops / f"{f['figure_id']}.png"
+            if not img.exists():
+                continue
+            try:
+                build_candidates(f["figure_id"], img, index, style, cand_root)
+                made += 1
+            except Exception as exc:
+                print(f"[worker] 候选生成失败 {f['figure_id']}: {exc}", flush=True)
+        return made
 
     def _run(self, job_id: str) -> None:
         self.current = job_id

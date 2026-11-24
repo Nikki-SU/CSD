@@ -5,6 +5,7 @@ import { api, type JobItem } from './api'
 export type Figure = {
   figure_id: string
   image: string
+  thumb?: string
   article: string
   page: number
   conf: number
@@ -29,8 +30,9 @@ export function useJobData() {
     setLoading(true)
     try {
       const { jobs } = await api.jobs()
-      // 找最新的、已产出结构式图的任务
-      for (const j of [...jobs].reverse()) {
+      // 按创建时间从新到旧，找第一个已产出结构式图的任务（最新优先）
+      const ordered = [...jobs].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+      for (const j of ordered) {
         try {
           const f = await api.figures(j.job_id)
           if (f?.figures?.length) {

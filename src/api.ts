@@ -81,6 +81,12 @@ export const api = {
     request<{ count: number }>('/api/labels/topo', { method: 'POST', body: JSON.stringify(payload) }),
   labels: (jobId: string) =>
     request<{ job_id: string; rows: Array<{ figure_id: string; verdict: string; selected_rank: string; redrawn_smiles: string; reviewed_at: string }> }>(`/api/labels?job_id=${encodeURIComponent(jobId)}`),
+  candidates: (jobId: string, figureId: string) =>
+    request<{
+      figure_id: string; generated: boolean
+      image_topo?: { rings: number; ring_sizes: number[]; labels: string[] }
+      candidates: Array<{ rank: number; smiles: string; cid: string; render: string; score: number; phash: number; sift: number; ssim: number }>
+    }>(`/api/jobs/${encodeURIComponent(jobId)}/candidates/${encodeURIComponent(figureId)}`),
   overview: () =>
     request<{ jobs: number; figures: number; reviewed: number; rejected: number; by_status: Record<string, number> }>('/api/overview'),
   fileUrl: (jobId: string, rel: string) => `${baseUrl()}/files/${jobId}/${rel}`,
