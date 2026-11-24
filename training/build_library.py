@@ -1,15 +1,15 @@
-"""训练⑥a：从 ChEMBL 下载 SMILES 建本地拓扑索引。
+"""训练⑥a：建本地 SMILES 库（两种来源）。
 
-为什么是 ChEMBL 而不是 PubChem：
-- PubChem 在 FTP/API 上都从中国网络常超时（实测 code=000）
-- ChEMBL（EBI，欧洲）可达（实测 200，1.7s），且提供 REST API 分页拉取
-所以来源：ChEMBL REST API（https://www.ebi.ac.uk/chembl/api/data/molecule.json）
+来源一（推荐，全量离线）：ChEMBL 官方 chemreps 文件（Tab 分隔，含 chembl_id + SMILES）
+    下载：curl -L -o chembl_37_chemreps.txt.gz \\
+        https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/chembl_37_chemreps.txt.gz
+    转换：python -m training.ingest_chembl --src chembl_37_chemreps.txt.gz --out smiles.tsv
 
-用法：
-    python -m training.build_library --limit 2000 --out data/library/smiles.tsv
-    python -m training.build_library --limit 0        # 0 = 全部（很大，慎用）
-再建索引：
-    python -m training.library build --smiles <smiles.tsv> --out <index.json.gz>
+来源二（小批量，REST API 分页）：本文件 download()，适合先试跑
+    实测：PubChem（NCBI）从中国网络超时；ChEMBL（EBI 欧洲）可达，故用 ChEMBL。
+
+建索引（两种来源产物都一样）：
+    python -m training.library build --smiles smiles.tsv --out index.json.gz
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ import urllib.request
 from pathlib import Path
 
 API = "https://www.ebi.ac.uk/chembl/api/data/molecule.json"
-PAGE = 100  # ChEMBL 单页上限较大，100 稳妥
+PAGE = 100
 
 
 def _fetch(offset: int, limit: int) -> dict:

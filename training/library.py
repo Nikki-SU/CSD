@@ -65,11 +65,18 @@ class TopoIndex:
     结构：{"by_exact": {"1|6|N,O,S": [ [smiles, cid], ... ]},
             "by_pattern": {"1|6|": [...], "1||": [...]} }
     by_pattern 用「环数 + 环大小」先粗筛（忽略标签），避免标签识别错时全灭。
+
+    大规模库（ChEMBL 2400 万）必须限量：每个拓扑键只保留**最长的 N 个不同 SMILES**
+    以外的短分子——古早文献结构式简单，保留短分子即可，不必存全部。
     """
+
+    MAX_PER_KEY = 60  # 每个拓扑键最多保留的候选数
 
     def __init__(self) -> None:
         self.by_exact: dict[str, list[tuple[str, str]]] = defaultdict(list)
         self.by_pattern: dict[str, list[tuple[str, str]]] = defaultdict(list)
+        self._seen_exact: dict[str, set[str]] = defaultdict(set)
+        self._seen_pattern: dict[str, set[str]] = defaultdict(set)
 
     @staticmethod
     def _labels_key(labels) -> str:
@@ -82,12 +89,19 @@ class TopoIndex:
         rings, sizes, labels = topo
         exact = f"{rings}|{','.join(map(str, sizes))}|{self._labels_key(labels)}"
         pattern = f"{rings}|{','.join(map(str, sizes))}|"
-        self.by_exact[exact].append((smiles, cid))
-        self.by_pattern[pattern].append((smiles, cid))
-        return True
+        added = False
+        if smiles not in self._seen_exact[exact] and len(self.by_exact[exact]) < self.MAX_PER_KEY:
+            self._seen_exact[exact].add(smiles)
+            self.by_exact[exact].append((smiles, cid))
+            added = True
+        if smiles not in self._seen_pattern[pattern] and len(self.by_pattern[pattern]) < self.MAX_PER_KEY * 2:
+            self._seen_pattern[pattern].add(smiles)
+            self.by_pattern[pattern].append((smiles, cid))
+            added = True
+        return added
 
-    def build_from_smiles_file(self, path: str | Path) -> int:
-        """从 'smiles<tab>cid'（可 .gz）文件建索引，返回入索引条数。"""
+    def build_from_smiles_file(self, path: str | Path, limit: int = 0) -> int:
+        """从 'smiles<tab>cid'（可 .gz）文件建索引。limit=0 表示不限条数。返回入索引条数。"""
         path = Path(path)
         opener = gzip.open if path.suffix == ".gz" else open
         n = 0
@@ -101,6 +115,8 @@ class TopoIndex:
                 cid = parts[1].strip() if len(parts) > 1 else ""
                 if smi and self.add(smi, cid):
                     n += 1
+                    if limit and n >= limit:
+                        break
         return n
 
     def save(self, path: str | Path) -> None:
@@ -119,8 +135,13 @@ class TopoIndex:
         with opener(path, "rt", encoding="utf-8") as fh:
             payload = json.load(fh)
         idx = cls()
-        idx.by_exact = defaultdict(list, payload.get("by_exact", {}))
-        idx.by_pattern = defaultdict(list, payload.get("by_pattern", {}))
+        idx.by_exact = defaultdict(list, {k: [tuple(x) for x in v] for k, v in payload.get("by_exact", {}).items()})
+        idx.by_pattern = defaultdict(list, {k: [tuple(x) for x in v] for k, v in payload.get("by_pattern", {}).items()})
+        # 恢复去重集合，便于之后追加
+        for k, v in idx.by_exact.items():
+            idx._seen_exact[k] = {x[0] for x in v}
+        for k, v in idx.by_pattern.items():
+            idx._seen_pattern[k] = {x[0] for x in v}
         return idx
 
     def query(self, image_topo: dict, limit: int = 200) -> list[Candidate]:

@@ -216,7 +216,17 @@ def read_labels_with_templates(image_path, templates_path, warnings: list[str] |
 # --------------------------------------------------------------------------
 
 def _contour_rings(ink: np.ndarray, warnings: list[str] | None) -> list[dict]:
-    contours, hierarchy = cv2.findContours(ink, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    """轮廓环检测。手绘/扫描图线条常断裂，先做闭运算接缝再找内洞。
+
+    实测：同一张真结构式（六元环手绘圆圈），不闭合时环数=0；
+    MORPH_CLOSE k=6 后内洞成形、近似边数=6 正确。k 太小接不上，太大把相邻环并一起，
+    取 6 是这几类古早图的折中（更细的图可用 4）。
+    """
+    # 断线修补：闭运算把笔画间的 1~3px 缺口接上，否则 findContours 拿不到内洞
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (6, 6))
+    ink_closed = cv2.morphologyEx(ink, cv2.MORPH_CLOSE, kernel)
+
+    contours, hierarchy = cv2.findContours(ink_closed, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     if hierarchy is None:
         return []
     hierarchy = hierarchy[0]
@@ -243,6 +253,11 @@ def _contour_rings(ink: np.ndarray, warnings: list[str] | None) -> list[dict]:
         if child == -1 or cv2.contourArea(contours[child]) < 0.15 * area:
             continue
         inner = contours[child]
+        # 真环的内洞必须够大：小内洞多是被闭运算粘住的字母/符号（O、S、⊕ 之类）。
+        # 实测真六元环内洞面积 ≈160，误报的字母内洞 45~57，取 100 作为下限。
+        inner_area = cv2.contourArea(inner)
+        if inner_area < 100:
+            continue
         n = len(cv2.approxPolyDP(inner, 0.045 * cv2.arcLength(inner, True), True))
         if not 3 <= n <= 9:
             n = len(cv2.approxPolyDP(c, 0.05 * peri, True))
