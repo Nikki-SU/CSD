@@ -59,6 +59,7 @@ export const api = {
   job: (id: string) => request<JobItem & { progress?: { stage: string; pct: number; message: string } }>(`/api/jobs/${id}`),
   result: (id: string) => request<Record<string, unknown>>(`/api/jobs/${id}/result`),
   doc: (id: string) => request<Record<string, unknown>>(`/api/jobs/${id}/doc`),
+  figures: (id: string) => request<{ job_id: string; source: string; count: number; figures: Array<{ figure_id: string; image: string; article: string; page: number; conf: number }> }>(`/api/jobs/${id}/figures`),
   settings: () => request<{ mineru_key_set: boolean; mineru_key_tail: string; mineru_model: string }>('/api/settings'),
   saveSettings: (payload: { mineru_key?: string; mineru_model?: string }) =>
     request<{ mineru_key_set: boolean; mineru_key_tail: string }>('/api/settings', {

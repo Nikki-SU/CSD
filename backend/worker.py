@@ -89,6 +89,79 @@ class Worker:
             job["status"] = status
             _write_json(path, job)
 
+    def _run_folder(self, job_id: str, job: dict, folder: Path, out_dir: Path) -> None:
+        """文件夹任务：PDF 串行识别 → 结构式裁图合集 → 瀑布流。
+
+        用 MolDet 检分子结构式（第一批直接用现成模型攒数据），裁图落 thumbs/，
+        写 figures.json 供前端 ScreenPage 读取。剔除由前端回写 labels。
+        """
+        import shutil
+        from training.detect import load_model, detect_page, resolve_pdf
+
+        pdfs = sorted(folder.glob("*.pdf"))
+        if not pdfs:
+            self._progress(job_id, "failed", 0, f"文件夹没有 PDF: {folder}")
+            self._set_status(job_id, "failed")
+            return
+        limit = int(job.get("params", {}).get("limit") or 0)  # 0 = 全部
+        if limit:
+            pdfs = pdfs[:limit]
+
+        self._set_status(job_id, "running")
+        self._progress(job_id, "ingest", 5, f"加载 MolDet，{len(pdfs)} 篇 PDF 待识别")
+        try:
+            model = load_model()
+        except Exception as exc:
+            self._progress(job_id, "failed", 0, f"MolDet 加载失败: {exc}")
+            self._set_status(job_id, "failed")
+            return
+
+        thumbs = out_dir / "thumbs"
+        thumbs.mkdir(parents=True, exist_ok=True)
+        import pymupdf, cv2, numpy as np
+        figures = []
+        for i, pdf in enumerate(pdfs):
+            pct = 5 + int(90 * (i + 1) / len(pdfs))
+            self._progress(job_id, "detect", pct, f"识别 {i+1}/{len(pdfs)}: {pdf.name}")
+            try:
+                doc = pymupdf.open(pdf)
+                for pinfo in [detect_page(model, page) for page in doc]:
+                    if not pinfo["boxes"]:
+                        continue
+                    pix = doc[pinfo["page"]-1].get_pixmap(dpi=150)
+                    arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+                    img = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR) if pix.n >= 3 else arr
+                    for box in pinfo["boxes"]:
+                        x1, y1, x2, y2 = [int(v) for v in box["bbox"]]
+                        pad = 6
+                        crop = img[max(0, y1-pad):min(img.shape[0], y2+pad),
+                                   max(0, x1-pad):min(img.shape[1], x2+pad)]
+                        if crop.size == 0:
+                            continue
+                        fid = f"p{pinfo['page']:03d}_f{len(figures):04d}"
+                        cv2.imwrite(str(thumbs / f"{fid}.png"), crop)
+                        figures.append({
+                            "figure_id": fid,
+                            "image": f"thumbs/{fid}.png",
+                            "article": pdf.name,
+                            "page": pinfo["page"],
+                            "conf": round(float(box["conf"]), 3),
+                            "bbox": box["bbox"],
+                            "has_structure": None,
+                        })
+                doc.close()
+            except Exception as exc:
+                print(f"[worker] {pdf.name} 识别失败: {exc}", flush=True)
+
+        _write_json(out_dir / "figures.json", {
+            "job_id": job_id,
+            "source": "moldet-doc",
+            "count": len(figures),
+            "figures": figures,
+        })
+        self._progress(job_id, "done", 100, f"完成：{len(pdfs)} 篇识别出 {len(figures)} 个结构式，待瀑布流筛选")
+        self._set_status(job_id, "done")
+
     def _run(self, job_id: str) -> None:
         self.current = job_id
         job = _read_json(self.data_root / "inbox" / job_id / "job.json")
@@ -101,6 +174,10 @@ class Worker:
             self._progress(job_id, "failed", 0, f"源文件不存在: {pdf_path}")
             self._set_status(job_id, "failed")
             return
+
+        # 文件夹路径 → MolDet 批量识别所有 PDF，产出结构式图合集进瀑布流
+        if pdf_path.is_dir():
+            return self._run_folder(job_id, job, pdf_path, out_dir)
 
         doi = (job.get("doi") or doi_from_filename(pdf_path)).strip()
         self._progress(job_id, "ingest", 10, "读取 PDF 与元数据")

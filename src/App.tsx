@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Mode } from './types'
 import { STORAGE_KEYS } from './types'
 import { probe } from './api'
+import { registerNav } from './nav'
 import WorkspacePage from './pages/WorkspacePage'
 import NewTaskPage from './pages/NewTaskPage'
 import ReviewPage from './pages/ReviewPage'
@@ -47,7 +48,15 @@ export default function App() {
     return () => { alive = false; window.clearInterval(t) }
   }, [])
 
-  const go = (id: PageId) => setPage(id)
+  const go = (id: PageId) => {
+    // 筛选/风格/拓扑等属训练流程，进入时确保训练模式，否则侧栏不显示该页
+    if (['screen', 'style', 'topo', 'diag', 'lookup'].includes(id) && mode === 'use') {
+      setMode('train')
+      localStorage.setItem(STORAGE_KEYS.mode, 'train')
+    }
+    setPage(id)
+  }
+  useEffect(() => { registerNav(go) }, [page, mode])
   const switchMode = (m: Mode) => {
     setMode(m)
     localStorage.setItem(STORAGE_KEYS.mode, m)

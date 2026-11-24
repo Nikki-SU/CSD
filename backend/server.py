@@ -116,7 +116,8 @@ def create_job(payload: dict) -> dict:
         "source_ref": source_ref,
         "doi": None,
         "style_profile": payload.get("style_profile") or "",
-        "params": {"max_candidates": 3, **({"topo_mode": payload["topo_mode"]} if payload.get("topo_mode") else {})},
+        # 文件夹任务默认只跑 50 篇一批（MolDet 约 10s/篇），避免一次跑几千篇卡死
+        "params": {"max_candidates": 3, "limit": 50, **(payload.get("params") or {}), **({"topo_mode": payload["topo_mode"]} if payload.get("topo_mode") else {})},
         "reviewer": payload.get("reviewer"),
         "year": payload.get("year") or "",
         "status": "queued",
@@ -422,7 +423,7 @@ class Handler(BaseHTTPRequestHandler):
             job = get_job(match.group(1))
             return self._json(200, job) if job else self._error(404, "任务不存在")
 
-        match = re.match(r"^/api/jobs/([^/]+)/(result|doc|metrics)$", path)
+        match = re.match(r"^/api/jobs/([^/]+)/(result|doc|metrics|figures)$", path)
         if match:
             job_id, name = match.group(1), match.group(2)
             data = job_artifact(job_id, f"{name}.json")

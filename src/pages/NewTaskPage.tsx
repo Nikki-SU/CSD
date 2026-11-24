@@ -1,7 +1,30 @@
 import { useState } from 'react'
+import { api } from '../api'
+import { navigate } from '../nav'
 
 export default function NewTaskPage() {
   const [source, setSource] = useState<'pdf' | 'image' | 'folder'>('pdf')
+  const [folder, setFolder] = useState('F:\\文献批量下载\\pdfs')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    const ref = source === 'folder' ? folder.trim() : ''
+    if (!ref) {
+      setError('先填文件夹路径（PDF 识别只支持文件夹，逐个解析）')
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      await api.createBatch([ref], 'pdf')
+      navigate('screen')
+    } catch (e) {
+      setError(String((e as Error).message || e))
+    } finally {
+      setBusy(false)
+    }
+  }
   return (
     <div className="page on">
       <h1 className="title">新建任务</h1>
@@ -15,7 +38,7 @@ export default function NewTaskPage() {
         {source === 'folder' ? (
           <div className="field">
             <label title="里面的 PDF 逐个解析；数据仍存在工作区">文件夹路径</label>
-            <input defaultValue="F:\文献批量下载\pdfs" />
+            <input value={folder} onChange={(e) => setFolder(e.target.value)} />
           </div>
         ) : (
           <div style={{ border: '1px dashed var(--line)', borderRadius: 8, padding: 22, textAlign: 'center', color: 'var(--muted)' }}>
@@ -39,7 +62,12 @@ export default function NewTaskPage() {
             <option value="both">两种都跑</option>
           </select>
         </div>
-        <div style={{ marginTop: 16 }}><button className="btn pri">提交任务</button></div>
+        {error && <div style={{ color: '#c0392b', marginTop: 12 }}>{error}</div>}
+        <div style={{ marginTop: 16 }}>
+          <button className="btn pri" disabled={busy} onClick={() => void submit()}>
+            {busy ? '正在登记…' : '提交任务'}
+          </button>
+        </div>
       </div>
     </div>
   )
