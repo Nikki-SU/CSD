@@ -1,6 +1,16 @@
 @echo off
 setlocal enabledelayedexpansion
-cd /d "%~dp0.."
+rem This script may live in <root>\bootstrap (dev) or directly in <root> (guided deploy).
+rem Locate the folder that actually contains requirements.txt and make it the base.
+set "BASE=%~dp0"
+:findbase
+if exist "%BASE%requirements.txt" goto base_ok
+for %%P in ("%BASE%..\") do set "UP=%%~fP"
+if /i "%UP%"=="%BASE:~0,-1%" goto base_missing
+set "BASE=%UP%"
+goto findbase
+:base_ok
+cd /d "%BASE%"
 rem Keep everything inside this folder: no pip cache, no __pycache__, no system writes.
 set "PYTHONDONTWRITEBYTECODE=1"
 set "PIP_NO_CACHE_DIR=1"
@@ -50,11 +60,25 @@ if not exist "%PY%" goto runtime_missing
 echo [3/5] Installing components into the private runtime (first run only)
 echo        All packages go into .runtime - nothing is written to the system Python.
 set "PIPFLAGS=--disable-pip-version-check --no-warn-script-location --no-cache-dir --timeout 20 --retries 2"
-"%PY%" -m pip install %PIPFLAGS% -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+rem Try several indexes; any one succeeding is enough. Official last.
+call :try_pip "https://pypi.tuna.tsinghua.edu.cn/simple"
 if not errorlevel 1 goto check_native
-echo        Mirror failed, retrying with the official index ...
-"%PY%" -m pip install %PIPFLAGS% -r requirements.txt
+call :try_pip "https://mirrors.aliyun.com/pypi/simple/"
+if not errorlevel 1 goto check_native
+call :try_pip "https://pypi.doubanio.com/simple/"
+if not errorlevel 1 goto check_native
+call :try_pip ""
 if errorlevel 1 goto pip_failed
+goto check_native
+
+:try_pip
+echo        pip index: %~1
+if "%~1"=="" (
+  "%PY%" -m pip install %PIPFLAGS% -r requirements.txt
+) else (
+  "%PY%" -m pip install %PIPFLAGS% -r requirements.txt -i %~1
+)
+exit /b %errorlevel%
 
 :check_native
 echo [4/5] Checking native deps ...
@@ -62,8 +86,18 @@ echo [4/5] Checking native deps ...
 if errorlevel 1 goto native_failed
 
 echo [5/5] Preparing MolDet model weight (first run downloads ~50 MB) ...
+if exist "fetch_models.py" goto fetch_here
+if exist "bootstrap\fetch_models.py" goto fetch_sub
+echo [WARN] fetch_models.py not found; skipping MolDet weight check.
+goto after_fetch
+:fetch_here
+"%PY%" fetch_models.py
+if errorlevel 1 goto model_failed
+goto after_fetch
+:fetch_sub
 "%PY%" bootstrap\fetch_models.py
 if errorlevel 1 goto model_failed
+:after_fetch
 
 if defined CSD_DATA_DIR (
   echo Data dir: %CSD_DATA_DIR%
@@ -95,6 +129,10 @@ echo Backend requested restart ...
 start "" "%~dp0start-windows.bat"
 exit /b 0
 
+:base_missing
+echo [ERROR] requirements.txt not found above this folder. Put the launcher in the folder with requirements.txt.
+pause
+exit /b 1
 :download_failed
 echo [ERROR] Cannot download Python runtime. Check internet or VPN.
 pause
