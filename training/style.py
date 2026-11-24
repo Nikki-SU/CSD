@@ -308,7 +308,7 @@ def cluster_styles(features: list[dict], out_dir, seed_labels: dict | None = Non
             seed_label="/".join(seed_names),
             centroid=[float(v) for v in (centers[lab] if centers is not None
                                          else x[idxs].mean(axis=0))],
-            members=members,
+            members=[],  # 成员明细含原图路径=数据，单独写本地 _cluster_detail.json，不进 assets
             year_median=float(np.median(years)) if years else None,
             year_span=int(max(years) - min(years)) if years else 0,
         )
@@ -317,13 +317,22 @@ def cluster_styles(features: list[dict], out_dir, seed_labels: dict | None = Non
         (out_dir / f"档位_{order}.json").write_text(
             json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    (out_dir / "_cluster_detail.json").write_text(
-        json.dumps({
-            "feature_names": list(rows[0].get("feature_names", StyleFeatures.FEATURE_NAMES)),
-            "year_weight": YEAR_WEIGHT,
-            "has_seed": bool(seed_pairs),
-            "profiles": profiles,
-        }, ensure_ascii=False, indent=2), encoding="utf-8")
+    # 明细含 members（每篇原图路径+向量）= 数据，写 _local 后缀文件（gitignore），不进 assets 交付
+    local_detail = {
+        "feature_names": list(rows[0].get("feature_names", StyleFeatures.FEATURE_NAMES)),
+        "year_weight": YEAR_WEIGHT,
+        "has_seed": bool(seed_pairs),
+        "profiles": profiles,
+        "members_by_profile": [
+            [{"image": str(rows[i].get("image", "")),
+              "year": rows[i].get("year"),
+              "vector": [float(v) for v in raw[i]]}
+             for i in groups[lab]]
+            for lab in sorted(groups)
+        ],
+    }
+    (out_dir / "_cluster_detail_local.json").write_text(
+        json.dumps(local_detail, ensure_ascii=False, indent=2), encoding="utf-8")
     return profiles
 
 

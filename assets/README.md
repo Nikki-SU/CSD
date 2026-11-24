@@ -1,19 +1,25 @@
 # 训练产物（随 GitHub 走）
 
-这里放**训练后会变化**的模块资产。每次训练完由人推送到 GitHub；
-演示机 pull 下来就是最新版。与 `models/`（MolDet 基础权重，bootstrap 自动下、不随训练变）区分。
+## 数据 vs 训练产物（红线）
 
-## 文件
+**数据（原材料，不进 GitHub，随 PDF 数据包拷）**：文献 PDF、结构式原图、人工标注样本、成员明细（哪篇文章属于哪个档位）。
 
-| 文件 | 来源 | 作用 |
-|---|---|---|
-| `classifier.joblib` | `training.collect train/refine` | 结构式二分类器，首审剔除回流重训 |
-| `templates.json` | `training.topo build_templates` | 按风格档位的字符模板（跨时代字体） |
-| `calibration.json` | `training.calibrate run` | 页级判据参数（逼近 baseline 的最优值） |
-| `style_profiles/*.json` | `training.style cluster` | 风格档位参数 |
+**训练产物（能力，进 GitHub，每次训练后推送）**：从数据里训练出来的模型权重、参数、模板——不含任何原图或文章索引。
 
-## 约定
+判定标准：**产物里只要含原图、原图路径、文章名/年份索引，就是数据，不能进这里。**
+这类文件用 `_local.json` 后缀，已被 gitignore。
 
-- 训练完把产物复制到这里，commit + push（人来做）。
-- 后端/训练代码从 `assets/` 读这些文件；`data/`、`models/` 只放本机运行缓存，不进库。
-- MolDet 权重不在这里——它在 `models/`，由 `bootstrap/fetch_models.py` 首次自动下载。
+## 这里放什么
+
+| 文件 | 来源 | 含数据？ | 作用 |
+|---|---|---|---|
+| `classifier.joblib` | `training.collect train/refine` | 否（数值特征向量+标签，非原图） | 结构式二分类器 |
+| `templates.json` | `training.topo build_templates` | 否（字符小图模板，是"学到的特征"） | 按档位的字符模板 |
+| `calibration.json` | `training.calibrate run` | 否（纯参数） | 页级判据最优参数 |
+| `style_profiles/档位_N.json` | `training.style cluster` | 否（已剥离 members） | 风格档位画法参数 |
+
+不放：`models/`（MolDet 基础权重，bootstrap 自动下、不随训练变）、任何 `_local.json`（数据明细）、任何 PDF/原图。
+
+## 流程
+
+训练完 → 把上表的纯产物复制到这里 → commit + push（人来做）→ 演示机 pull 即最新版。
