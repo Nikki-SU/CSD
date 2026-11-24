@@ -1,9 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
 cd /d "%~dp0.."
+rem Keep everything inside this folder: no pip cache, no __pycache__, no system writes.
+set "PYTHONDONTWRITEBYTECODE=1"
+set "PIP_NO_CACHE_DIR=1"
+set "PYTHONPYCACHEPREFIX=%CD%\.runtime\pycache"
 
 echo ============================================
 echo  CSD local backend - first run sets up everything
+echo  ISOLATED: Python and all packages live in .runtime\
+echo            Nothing is installed system-wide. Delete the folder to remove all.
 echo  Backend: http://127.0.0.1:8765
 echo ============================================
 
@@ -41,11 +47,13 @@ del /q "python-runtime.tar.gz"
 if not exist "%PY%" goto runtime_missing
 
 :install_deps
-echo [3/4] Installing components (first run only, needs internet)
-"%PY%" -m pip install --disable-pip-version-check --no-warn-script-location --timeout 20 --retries 2 -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+echo [3/4] Installing components into the private runtime (first run only)
+echo        All packages go into .runtime - nothing is written to the system Python.
+set "PIPFLAGS=--disable-pip-version-check --no-warn-script-location --no-cache-dir --timeout 20 --retries 2"
+"%PY%" -m pip install %PIPFLAGS% -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 if not errorlevel 1 goto check_native
 echo        Mirror failed, retrying with the official index ...
-"%PY%" -m pip install --disable-pip-version-check --no-warn-script-location --timeout 20 --retries 2 -r requirements.txt
+"%PY%" -m pip install %PIPFLAGS% -r requirements.txt
 if errorlevel 1 goto pip_failed
 
 :check_native
