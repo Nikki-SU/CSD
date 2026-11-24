@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 STEPS = [
+    ("detect", "①0 MolDet批量标注(baseline+攒数据)", "training/01-collect"),
     ("classify", "①a 结构式二分类", "training/01-collect"),
     ("align", "①b 文本-图对齐", "training/01-collect"),
     ("topo", "③ 拓扑指标提取", "training/02-topo"),
@@ -55,7 +56,17 @@ def run_step(root: Path, step: str) -> None:
     dirs = step_dirs(root)
     root_t = root / "training"
 
-    if step == "classify":
+    if step == "detect":
+        from .detect import run
+        pdf_dir = root_t / "00-pdfs"
+        out = root_t / "detections.json"
+        if not list(pdf_dir.glob("*.pdf")):
+            print(f"还没有 PDF：{pdf_dir}；先把文献放进去或跑 workspace sync")
+            return
+        run(pdf_dir, out)
+        print(f"①0 MolDet 标注完成 → {out}（下一步：人审瀑布流，再训小模型）")
+
+    elif step == "classify":
         from .collect import classify_images
         model = root_t / "models" / "structure_svc.joblib"
         src = dirs["classify"]
