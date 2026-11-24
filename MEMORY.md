@@ -48,7 +48,7 @@
 ### 3.1 代码事实（2026-11-23 实测，交接前可直接核对）
 
 - **匹配链路未接**：`pipeline/result_build.py::_figure_entry()` 中 `query_features=None`、`candidates=[]`、`compare_path=""`。
-- **接口已按检索式设计**：同文件 `CSV_FIELDS` 含 `rank/candidate_id/phash/ssim/topo_match/edges/rings/ring_sizes/labels` 及 `query_*` 对应项——说明识别器路线是「渲染候选 → 图像比对排序」，不是训练模型。
+- **接口已按检索式设计**：同文件 `CSV_FIELDS` 含 `rank/candidate_id/phash/ssim/topo_match/rings/ring_sizes/labels` 及 `query_*` 对应项——说明识别器路线是「渲染候选 → 图像比对排序」，不是训练模型。
 - **提图**：`pipeline/figures.py::figure_records()` 只收 MinerU `type=image`；`chart` / `table` 不收。
 - **结构式判定**：`figures.py::judge_caption()` 语义模型优先；无模型走关键词兜底；拿不准标 `unknown` 待人工复核。
 - **文章筛查**：`pipeline/screen.py::screen_article()` 先廉价判断（图注/图块/扫描件），扫描件才整篇过一次 MinerU。

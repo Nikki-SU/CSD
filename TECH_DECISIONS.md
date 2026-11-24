@@ -18,7 +18,7 @@
 - 公库：`Nikki-SU/CSD`（公开，Pages）。
 - 私库：`Nikki-SU/CSDws`（私有，数据集 + 后端）。`csd-workspace` 曾是我的占位默认名，已作废。
 - 密钥只从环境变量读，不进任何仓库。
-- **文献图必须提取粗特征**（`edges` / `rings` / `ring_sizes` / `labels`），与候选侧同构，作为初筛的查询侧输入；不得只从候选端算拓扑。
+- **文献图必须提取粗特征**（`rings` / `ring_sizes` / `labels`），与候选侧同构，作为初筛的查询侧输入；不得只从候选端算拓扑。
 - **无图注占比 ≥20% 是报警线**：按格子统计，达到即停止该格并向人类报告；不得自动纳入、自动作废或自选判定方法。
 
 ---
@@ -215,7 +215,7 @@
 | `image_path` | str | 裁剪图相对路径 |
 | `legible` | bool | 人/机器初判是否可辨 |
 | `has_structure` | bool | 是否检出至少 1 个结构式 |
-| `features` | obj | 从**文献图**提取的粗特征：`edges` / `rings` / `ring_sizes` / `labels`；初筛左侧，`legible=true` 时必填 |
+| `features` | obj | 从**文献图**提取的粗特征：`rings` / `ring_sizes` / `labels`；初筛左侧，`legible=true` 时必填 |
 | `year` | int | 文献年份 |
 | `journal` | str | 刊名 |
 | `style_profile` | str | 风格档位，如 `default_1970s` |
@@ -231,7 +231,7 @@
 | `inchi_key` | str | 规范化标识，用于去重与真值比对（仅后端） |
 | `render_path` | str | 该候选按古早风格的渲染图 |
 | `source` | enum | `db` / `opsin` |
-| `features` | obj | `edges` / `rings` / `ring_sizes` / `labels` |
+| `features` | obj | `rings` / `ring_sizes` / `labels` |
 | `score` | obj | `phash` / `ssim` / `topo_match` |
 
 公开的 `result.json` 只下发 `rank` / `candidate_id` / `render_path` / `score` / `features`。
@@ -272,8 +272,8 @@
 | 函数 | 输入 → 输出 | 说明 |
 |---|---|---|
 | `render_mol(smiles, style, size, seed) → png` | SMILES → 图像路径 | 固定 seed 保证可复现 |
-| `topo_features(smiles) → dict` | SMILES → 边数/环数/环大小 | 候选侧粗特征 |
-| `image_features(crop) → dict` | 文献裁剪图 → `edges` / `rings` / `ring_sizes` / `labels` | **查询侧**粗特征；`legible=true` 时必须有值，用于初筛 |
+| `topo_features(smiles) → dict` | SMILES → 环数/环大小/标签 | 候选侧粗特征 |
+| `image_features(crop) → dict` | 文献裁剪图 → `rings` / `ring_sizes` / `labels` | **查询侧**粗特征；`legible=true` 时必须有值，用于初筛 |
 | `verify_doc(pdf, doi, title) → doc` | PDF + 声称的 DOI/标题 → `verify_status` / `title_sim` | 前两页文本，无文本层才 OCR |
 | `has_structure(pdf) → bool` | PDF → 是否至少含 1 个结构式 | 入格闸门（ADR-018） |
 | `rank_candidates(figure, pool) → [≤3]` | 裁剪图 + 候选池 → 3 个有序候选 | 先拓扑后外观 |

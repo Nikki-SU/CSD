@@ -62,7 +62,7 @@
 - 契约 `labels.csv` 目前只有三选一 verdict，**没有拓扑校对字段**。
 - **待后端确认**：
   - 存哪里？建议新增 `labels/{job}_topo.csv`。
-  - 字段建议：`job_id,figure_id,feature,expected,detected,reviewer,reviewed_at`，其中 `feature` ∈ `edges|rings|ring_sizes|labels`；一行一个被标红的项。
+  - 字段建议：`job_id,figure_id,feature,expected,detected,reviewer,reviewed_at`，其中 `feature` ∈ `rings|ring_sizes|labels`；一行一个被标红的项。
   - 是否也需要记「全部正确」的图（用于算拓扑准确度），还是只记错的、正确项从已匹配样本推导？
 
 ---

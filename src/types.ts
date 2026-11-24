@@ -3,7 +3,6 @@
 export type Mode = 'use' | 'train'
 
 export interface Features {
-  edges: number
   rings: number
   ring_sizes: number[]
   labels: string[]
@@ -56,9 +55,8 @@ export interface Verdict {
   reviewed_at: string
 }
 
-// 拓扑校对：四项的通过/标红状态。点标红即改，下一条自动保存。
+// 拓扑校对：三项的通过/标红状态。点标红即改，自动轮转。
 export interface TopoCheck {
-  edges: boolean
   rings: boolean
   ring_sizes: boolean
   labels: boolean

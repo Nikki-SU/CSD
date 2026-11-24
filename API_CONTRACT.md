@@ -146,14 +146,14 @@
       "compare_path": "outbox/j_20261122_1430_a1b2c3/compare/p004_f01.png",
       "legible": true,
       "has_structure": true,
-      "query_features": {"edges": 14, "rings": 1, "ring_sizes": [5], "labels": ["N", "O"]},
+      "query_features": {"rings": 1, "ring_sizes": [5], "labels": ["N", "O"]},
       "candidates": [
         {
           "rank": 1,
           "candidate_id": "c_7f3a91d2",
           "render_path": "outbox/j_20261122_1430_a1b2c3/compare/p004_f01_r1.png",
           "score": {"phash": 0.91, "ssim": 0.82, "topo_match": true},
-          "features": {"edges": 14, "rings": 1, "ring_sizes": [5], "labels": ["N", "O"]}
+          "features": {"rings": 1, "ring_sizes": [5], "labels": ["N", "O"]}
         }
       ]
     }
@@ -177,8 +177,8 @@
 ```
 job_id,figure_id,page,bbox_x1,bbox_y1,bbox_x2,bbox_y2,page_w,page_h,
 legible,has_structure,rank,candidate_id,phash,ssim,topo_match,
-edges,rings,ring_sizes,labels,crop_path,render_path,compare_path,doc_verify,
-query_edges,query_rings,query_ring_sizes,query_labels
+rings,ring_sizes,labels,crop_path,render_path,compare_path,doc_verify,
+query_rings,query_ring_sizes,query_labels
 ```
 
 - 一行一个候选；`ring_sizes` 与 `labels` 用 `|` 分隔，如 `5|6`、`N|O`。
@@ -268,7 +268,7 @@ job_id,figure_id,selected_rank,verdict,redrawn_smiles,reviewer,reviewed_at
 4. **审阅页** `/jobs/:jobId/review`
    - 顶部：文档核验横幅（`verified`/`mismatch`/`unreadable`）、进度、筛选（未审/已审/不可读）、已审计数。
    - 左：原图裁剪，支持缩放与平移，显示页码与 bbox。
-   - 右：3 个候选卡，每卡显示 `candidate_id`、`rank`、渲染图、特征（edges/rings/ring_sizes/labels）、分数（phash/ssim/topo_match）；可放大。
+   - 右：3 个候选卡，每卡显示 `candidate_id`、`rank`、渲染图、特征（rings/ring_sizes/labels）、分数（phash/ssim/topo_match）；可放大。
    - 显示后端拼好的 `compare_path` 对比图。
    - 操作：选 rank1/2/3、全错、标记不可读、跳过。
    - 全错 → 打开 Ketcher/JSME 画布，保存 `redrawn_smiles`。
@@ -322,6 +322,7 @@ job_id,figure_id,selected_rank,verdict,redrawn_smiles,reviewer,reviewed_at
 
 | 版本 | 变更 |
 |---|---|
-| v0.3.1 | 补上文献图侧粗特征：`result.json` 增加图级 `query_features`，`result.csv` 追加 `query_edges/query_rings/query_ring_sizes/query_labels`；§零 明确 `legible=true` 时查询侧特征必填 |
+| v0.3.2 | 拓扑特征去掉 `edges`（边数从古早图提取不可靠，不作为指标）；Features 与 CSV 只留 rings/ring_sizes/labels |
+| v0.3.1 | 补上文献图侧粗特征：`result.json` 增加图级 `query_features`，`result.csv` 追加 `query_rings/query_ring_sizes/query_labels`；§零 明确 `legible=true` 时查询侧特征必填 |
 | v0.3.0 | 重写：新增命名规范、UI 功能清单、零数据红线；统一 `figure_id`；新增 `doc.json` 与 `verify_status`；候选去 SMILES/InChIKey；`labels` 明确三种 verdict；明确大文件与写并发处理 |
 | v0.2.0 | 文件即接口；路径制契约；轮询与写入规范 |

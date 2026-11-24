@@ -2,8 +2,7 @@
 // 后端就绪后由 GitHub Contents API 读取私库结果替换，界面不造假数据。
 import type { Features, Figure, JobMeta } from './types'
 
-const feat = (edges: number, rings: number, ringSizes: number[], labels: string[]): Features => ({
-  edges,
+const feat = (rings: number, ringSizes: number[], labels: string[]): Features => ({
   rings,
   ring_sizes: ringSizes,
   labels,
@@ -53,28 +52,28 @@ export const MOCK_FIGURE: Figure = {
   compare_path: 'outbox/mock/compare/p004_f01.png',
   legible: true,
   has_structure: true,
-  query_features: feat(14, 1, [5], ['N', 'O']),
+  query_features: feat(1, [5], ['N', 'O']),
   candidates: [
     {
       rank: 1,
       candidate_id: 'c_7f3a91d2',
       render_path: 'outbox/mock/compare/p004_f01_r1.png',
       score: { phash: 0.91, ssim: 0.82, topo_match: true },
-      features: feat(14, 1, [5], ['N', 'O']),
+      features: feat(1, [5], ['N', 'O']),
     },
     {
       rank: 2,
       candidate_id: 'c_3e8b01fa',
       render_path: 'outbox/mock/compare/p004_f01_r2.png',
       score: { phash: 0.78, ssim: 0.71, topo_match: true },
-      features: feat(14, 1, [5], ['N']),
+      features: feat(1, [5], ['N']),
     },
     {
       rank: 3,
       candidate_id: 'c_a1c96e04',
       render_path: 'outbox/mock/compare/p004_f01_r3.png',
       score: { phash: 0.74, ssim: 0.66, topo_match: false },
-      features: feat(15, 1, [6], ['N', 'O']),
+      features: feat(1, [6], ['N', 'O']),
     },
   ],
 }

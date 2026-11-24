@@ -180,7 +180,7 @@ Open Babel 仍然保留，但只做两件事：**格式转换**（mol ↔ SDF �
 | PDF 提图 | `PyMuPDF`（fitz）+ `pdfplumber` 兜底 | ImageJ 是 GUI，runner 上不可靠 |
 | 分子格式 | RDKit 读 mol/SDF；Open Babel 做转换与校验 | — |
 | 仿古渲染 | RDKit `MolDraw2DCairo`，参数来自「画法配置」 | Open Babel 出图样式不可控 |
-| 拓扑特征 | RDKit 图论 API（边数、环数、环元数；H 数） | 从连接矩阵自己写也行，但有现成 API 就别自造 |
+| 拓扑特征 | RDKit 图论 API（环数、环元数；H 数），不用边数 | 从连接矩阵自己写也行，但有现成 API 就别自造 |
 | 价键校验 | Open Babel 内置校验 / RDKit sanitize | 规则不手写 |
 | 粗筛 | 感知哈希（pHash/dHash） | 便宜、抗缩放与轻微形变 |
 | 精判 | SSIM + 模板匹配（先做小样本对比实验再定主指标） | 原方案也不锁定指标，同意 |
