@@ -144,6 +144,80 @@ def lookup_crossref(doi: str, timeout: float = 10.0) -> dict:
     }
 
 
+def title_from_first_page(pdf_path: str | Path, hint_year: int | None = None) -> str | None:
+    """从 PDF 首页抽文章标题。
+
+    老文献文件名只有「作者+年份」，正文也无 DOI，只能靠标题反查 Crossref。
+    启发式：跳过机构声明/收稿日期行，取最长的全大写连续行（跨行合并）。
+    """
+    try:
+        import pymupdf
+    except ImportError as e:
+        raise RuntimeError("需要 pymupdf：pip install pymupdf（PDF 标题抽取依赖它）") from e
+    doc = pymupdf.open(str(pdf_path))
+    try:
+        text = doc[0].get_text()
+    finally:
+        doc.close()
+    lines = [re.sub(r"\s+", " ", l).strip() for l in text.split("\n")]
+    skip = re.compile(r"contribution|laboratory|department|university|received|accepted|communicat|\b18\d{2}\b|\b19\d{2}\b|\b20\d{2}\b", re.I)
+    author_mark = re.compile(r"[*†‡,]|\b[A-Z]+\s+[A-Z]\.$|puerto rico|rochester", re.I)
+    cands = [l for l in lines if 8 <= len(l) <= 120 and not skip.search(l)
+             and l == l.upper() and not author_mark.search(l)]
+    if not cands:
+        cands = [l for l in lines if 12 <= len(l) <= 120 and not skip.search(l) and not author_mark.search(l)]
+    title = cands[0] if cands else None
+    return title or None
+
+
+def lookup_crossref_by_title(title: str, year: int | None = None, timeout: float = 12.0) -> dict:
+    """用 Crossref bibliographic 查询按标题反查元数据（含 DOI）。
+
+    老扫描件没有 DOI，这是唯一的身份入口。返回同 lookup_crossref 的结构。
+    """
+    if not title:
+        return {"error": "空标题，无法查询 Crossref"}
+    try:
+        import requests
+    except ImportError as e:
+        raise RuntimeError("需要 requests：pip install requests") from e
+    params = {"query.bibliographic": title, "rows": 3}
+    if year:
+        params["filter"] = f"from-pub-date:{year}-01-01,until-pub-date:{year + 2}-12-31"
+    try:
+        resp = requests.get("https://api.crossref.org/works", params=params,
+                            headers={"User-Agent": USER_AGENT}, timeout=timeout)
+    except requests.Timeout:
+        return {"error": f"Crossref 标题查询超时（{timeout}s）"}
+    except requests.RequestException as e:
+        return {"error": f"Crossref 标题查询失败：{e}"}
+    if resp.status_code != 200:
+        return {"error": f"Crossref 返回 HTTP {resp.status_code}"}
+    try:
+        items = ((resp.json() or {}).get("message") or {}).get("items") or []
+    except ValueError as e:
+        return {"error": f"Crossref 响应不是合法 JSON：{e}"}
+    if not items:
+        return {"error": "Crossref 标题查询无结果"}
+    msg = items[0]
+    titles = msg.get("title") or []
+    journals = msg.get("container-title") or []
+    year_found = None
+    for key in ("published-print", "published", "issued"):
+        parts = (msg.get(key) or {}).get("date-parts") or []
+        if parts and parts[0] and parts[0][0]:
+            year_found = int(parts[0][0])
+            break
+    return {
+        "doi": msg.get("DOI"),
+        "year": year_found,
+        "journal": journals[0] if journals else None,
+        "title": titles[0] if titles else None,
+        "matched_query": title,
+        "score": msg.get("score"),
+    }
+
+
 # --------------------------------------------------------------------------- #
 # ③ 文本-图对齐（无图注场景）
 # --------------------------------------------------------------------------- #
@@ -151,11 +225,15 @@ _IMG_MD_RE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 _IMG_HTML_RE = re.compile(r"<img\b[^>]*?\bsrc\s*=\s*[\"']([^\"']+)[\"']", re.IGNORECASE)
 _IMG_CLEAN_RE = re.compile(r"!\[[^\]]*\]\([^)]*\)|<img\b[^>]*>", re.IGNORECASE)
 
+_ROMAN = r"(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)"
 _LABEL_PATTERNS = (
     re.compile(r"\bcompound\s*(?:no\.?\s*)?(\d{1,3}[a-z]?)\b", re.IGNORECASE),
     re.compile(r"\b(\d{1,3}[a-z]?)\s+was\s+(?:obtained|prepared|isolated|synthesized|formed|produced)\b", re.IGNORECASE),
     re.compile(r"\b(?:product|intermediate|ligand|ester)\s+(\d{1,3}[a-z]?)\b", re.IGNORECASE),
-    re.compile(r"^\s*(\d{1,3}[a-z]?)\s*$", re.MULTILINE),  # 图下方单独一行的标记
+    re.compile(r"^\s*(\d{1,3}[a-z]?)\s*$", re.MULTILINE),  # 图下方单独一行的数字标记
+    re.compile(r"^\s*(" + _ROMAN + r")\s*$", re.MULTILINE),  # 老文献常用罗马数字标图 I/II/III
+    re.compile(r"\b(?:formula|structure|scheme)\s+(" + _ROMAN + r")\b"),  # "formula II"
+    re.compile(r"\(" + _ROMAN + r"\)"),  # 正文里的 "(I)" 引用
 )
 
 _CHEM_SUFFIX = (
