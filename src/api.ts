@@ -77,5 +77,12 @@ export const api = {
     }),
   saveLabels: (payload: unknown) =>
     request<{ count: number }>('/api/labels', { method: 'POST', body: JSON.stringify(payload) }),
+  saveTopo: (payload: unknown) =>
+    request<{ count: number }>('/api/labels/topo', { method: 'POST', body: JSON.stringify(payload) }),
+  labels: (jobId: string) =>
+    request<{ job_id: string; rows: Array<{ figure_id: string; verdict: string; selected_rank: string; redrawn_smiles: string; reviewed_at: string }> }>(`/api/labels?job_id=${encodeURIComponent(jobId)}`),
+  overview: () =>
+    request<{ jobs: number; figures: number; reviewed: number; rejected: number; by_status: Record<string, number> }>('/api/overview'),
   fileUrl: (jobId: string, rel: string) => `${baseUrl()}/files/${jobId}/${rel}`,
+  exportUrl: (jobId: string) => `${baseUrl()}/api/export/${jobId}`,
 }

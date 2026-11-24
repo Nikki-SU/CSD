@@ -195,6 +195,41 @@ def save_labels(payload: dict) -> dict:
     return {"job_id": job_id, "count": len(existing)}
 
 
+def load_labels(job_id: str) -> list[dict]:
+    """读某任务的人工判定（供审阅/报告/风格/归因页显示真实结果）。"""
+    if not JOB_ID_RE.match(job_id):
+        raise ValueError("job_id 非法")
+    path = _data_root / "labels" / f"{job_id}.csv"
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8-sig") as handle:
+        return [dict(row) for row in csv.DictReader(handle)]
+
+
+def overview() -> dict:
+    """聚合所有任务的真实统计，供归因对比页。数字从 job/figures/labels 算，不造假。"""
+    jobs = list_jobs()
+    total_figures = 0
+    reviewed = 0
+    rejected = 0
+    for job in jobs:
+        figs = job_artifact(job["job_id"], "figures.json") or {}
+        total_figures += int(figs.get("count") or 0)
+        rows = load_labels(job["job_id"])
+        reviewed += len({r.get("figure_id") for r in rows})
+        rejected += sum(1 for r in rows if r.get("verdict") in {"wrong", "none", "bad", "false", "style_bad"})
+    return {
+        "jobs": len(jobs),
+        "figures": total_figures,
+        "reviewed": reviewed,
+        "rejected": rejected,
+        "by_status": {
+            s: sum(1 for j in jobs if j.get("status") == s)
+            for s in {j.get("status") for j in jobs}
+        },
+    }
+
+
 def save_topo(payload: dict) -> dict:
     job_id = payload.get("job_id") or ""
     if not JOB_ID_RE.match(job_id):
@@ -415,6 +450,19 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/settings":
             return self._json(200, public_settings())
+
+        if path == "/api/overview":
+            try:
+                return self._json(200, overview())
+            except ValueError as exc:
+                return self._error(400, str(exc))
+
+        if path == "/api/labels":
+            job_id = (parse_qs(parsed.query).get("job_id") or [""])[0]
+            try:
+                return self._json(200, {"job_id": job_id, "rows": load_labels(job_id)})
+            except ValueError as exc:
+                return self._error(400, str(exc))
 
         if path == "/api/scan":
             if not self._write_allowed():
