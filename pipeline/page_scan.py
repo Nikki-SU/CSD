@@ -37,6 +37,20 @@ def page_profile(page: "pymupdf.Page", dpi: int = 150) -> dict:
     median_h = float(np.median(heights[keep])) if keep.any() else 0.0
     big_blocks = int(((heights > 2.5 * median_h) & (areas > 800)).sum()) if median_h else 0
 
+    # 老扫描件结构式夹在正文里、无图注、键线是断的：原始连通域抓不到。
+    # 闭运算把断线连成块后，结构式表现为「中等块」：宽<栏宽一半、高约 3~10 行字高。
+    # 判据来自实图量测（1937 JACS 第1页 3 个结构式均命中），非拍脑袋。
+    k = max(5, int(gray.shape[1] * 0.007))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k, k))
+    closed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+    _, _, cstats, _ = cv2.connectedComponentsWithStats(closed, 8)
+    cw = cstats[1:, cv2.CC_STAT_WIDTH]
+    ch = cstats[1:, cv2.CC_STAT_HEIGHT]
+    ca = cstats[1:, cv2.CC_STAT_AREA]
+    mid_bands = (ch > 4 * median_h) & (ch < 20 * median_h) if median_h else np.zeros(len(ca), bool)
+    mid_blocks = int((mid_bands & (cw < gray.shape[1] * 0.5) & (cw > gray.shape[1] * 0.06)
+                      & (ca > 1500)).sum())
+
     has_text = bool(text.strip())
     caption_hit = bool(CAPTION_RE.search(text))
     return {
@@ -46,8 +60,9 @@ def page_profile(page: "pymupdf.Page", dpi: int = 150) -> dict:
         "drawings": len(page.get_drawings()),
         "median_line_h": round(median_h, 1),
         "big_blocks": big_blocks,
+        "mid_blocks": mid_blocks,
         "caption_hit": caption_hit,
-        "has_figure": bool(big_blocks or caption_hit),
+        "has_figure": bool(big_blocks or mid_blocks or caption_hit),
         "ms": round((time.time() - started) * 1000),
     }
 
