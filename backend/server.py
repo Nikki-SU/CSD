@@ -34,11 +34,12 @@ except ImportError:  # 允许直接 python backend/server.py
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from worker import Worker
 
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.5.1"
 
 # 引导部署的四段版本号：任何嵌入文件（后端源码/启动器）改动后 bump 对应段。
 # 前端 bootstrapFiles.ts 里的 BUNDLE_VERSION 由 embed 脚本从这段读，比对后提示用户更新本地文件。
-VERSION = {"frontend": 1, "backend": 1, "model": 1, "data": 1}
+# 0.5.1: 修编排KeyError/评估0样本/真300dpi裁图/渲染hash/路径防护/页级口径/字体跨平台。
+VERSION = {"frontend": 2, "backend": 2, "model": 1, "data": 1}
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA = ROOT / "data"
 FRONTEND_DIST = ROOT / "dist" if (ROOT / "dist").exists() else ROOT / "frontend" / "dist"
