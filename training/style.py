@@ -9,7 +9,7 @@ RDKit 无法逐片段设置渲染参数，segment_styles 仅作接口预留并�
 
 可单独调试：
     python -m training.style cluster --images <dir> --out <dir>
-    python -m training.style eval --profiles <_cluster_detail.json> --truth <truth.json>
+    python -m training.style eval --profiles <_cluster_detail_local.json> --truth <truth.json>
     python -m training.style render --smiles <smi> --style <style.json> --out <png>
     python -m training.style batch --style-dir <dir> --out <dir> --smiles "<smi>" ...
 """
@@ -35,7 +35,23 @@ except ImportError:  # 允许模块先于图像依赖可用；extract_features �
 YEAR_WEIGHT = 1.5          # 年份是强特征，标准化后加权
 MAX_AUTO_CLUSTERS = 8      # 无种子时层次聚类最多保留的档位数
 IMAGE_EXTS = (".png", ".jpg", ".jpeg")
-DEFAULT_FONT_PATH = r"C:\Windows\Fonts\times.ttf"
+
+
+def _pick_font_path() -> str:
+    """按平台探测衬线字体；都找不到就留空，走 RDKit 默认字体。"""
+    import platform
+    candidates = [
+        r"C:\Windows\Fonts\times.ttf",
+        "/System/Library/Fonts/Times Roman.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+    ]
+    for p in candidates:
+        if Path(p).exists():
+            return p
+    return ""
+
+
+DEFAULT_FONT_PATH = _pick_font_path()
 
 
 # --------------------------------------------------------------------------
@@ -247,7 +263,7 @@ def cluster_styles(features: list[dict], out_dir, seed_labels: dict | None = Non
     """聚类定档。seed_labels: {image_path: '档位A'} 人的标注作种子。
 
     返回 list[dict]（可 json 序列化）；写出每档 <档位_*.json> 及
-    _cluster_detail.json（含 members，供 evaluate_clusters 使用）。
+    _cluster_detail_local.json（含 members，供 evaluate_clusters 使用）。
     """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -308,7 +324,7 @@ def cluster_styles(features: list[dict], out_dir, seed_labels: dict | None = Non
             seed_label="/".join(seed_names),
             centroid=[float(v) for v in (centers[lab] if centers is not None
                                          else x[idxs].mean(axis=0))],
-            members=[],  # 成员明细含原图路径=数据，单独写本地 _cluster_detail.json，不进 assets
+            members=[],  # 成员明细含原图路径=数据，单独写本地 _cluster_detail_local.json，不进 assets
             year_median=float(np.median(years)) if years else None,
             year_span=int(max(years) - min(years)) if years else 0,
         )
@@ -348,11 +364,14 @@ def _find_truth(image: str, truth: dict):
     return None
 
 
-def evaluate_clusters(profiles, truth: dict) -> dict:
+def evaluate_clusters(profiles, truth: dict, members_by_profile=None) -> dict:
     """训练/测试准确度 + silhouette + 同档一致性。
 
     profiles: cluster_styles 的返回（list[dict] 或 list[StyleProfile]）。
     truth: {image_path: '档位A'} 人的标注真值。
+    members_by_profile: _cluster_detail_local.json 里的成员明细（按 profile 顺序）。
+      成员含原图路径=数据，不能进 assets，所以 profile["members"] 被置空，
+      评估时必须用这里的副本，否则永远只有 0 个样本。
     """
     result: dict = {"accuracy": None, "n_train": 0, "n_test": 0,
                     "silhouette": None, "cluster_purity": None,
@@ -364,7 +383,10 @@ def evaluate_clusters(profiles, truth: dict) -> dict:
     profiles = [p if isinstance(p, dict) else asdict(p) for p in (profiles or [])]
     samples = []
     for cid, prof in enumerate(profiles):
-        for m in prof.get("members", []):
+        members = prof.get("members") or []
+        if not members and members_by_profile and cid < len(members_by_profile):
+            members = members_by_profile[cid] or []
+        for m in members:
             label = _find_truth(str(m.get("image", "")), truth)
             if label is not None and m.get("vector"):
                 samples.append((str(m["image"]), m.get("year"), np.array(m["vector"], float),
@@ -613,7 +635,7 @@ def main() -> None:
     c.add_argument("--seed-labels", help="人的标注 json: {image_path: '档位A'}")
 
     e = sub.add_parser("eval", help="训练/测试准确度与同档一致性")
-    e.add_argument("--profiles", required=True, help="cluster 输出的 _cluster_detail.json")
+    e.add_argument("--profiles", required=True, help="cluster 输出的 _cluster_detail_local.json（含成员明细）")
     e.add_argument("--truth", required=True, help="人的标注 json")
 
     r = sub.add_parser("render", help="④ 渲染单个分子")
@@ -645,7 +667,8 @@ def main() -> None:
     elif args.cmd == "eval":
         detail = _read_json(args.profiles)
         profiles = detail["profiles"] if isinstance(detail, dict) and "profiles" in detail else detail
-        metrics = evaluate_clusters(profiles, _read_json(args.truth))
+        members = detail.get("members_by_profile") if isinstance(detail, dict) else None
+        metrics = evaluate_clusters(profiles, _read_json(args.truth), members)
         print(json.dumps(metrics, ensure_ascii=False, indent=2))
     elif args.cmd == "render":
         segments = _read_json(args.segment_styles) if args.segment_styles else None

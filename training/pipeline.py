@@ -22,7 +22,11 @@ STEPS = [
 
 
 def step_dirs(root: Path) -> dict[str, Path]:
-    return {key: root / rel for key, _, rel in STEPS}
+    dirs = {key: root / rel for key, _, rel in STEPS}
+    # detect/classify/align 三步共用采集目录；旧分支读 "collect" 别名。
+    # 只在这里加别名，不改 STEPS（否则 status() 会多出一行）。
+    dirs["collect"] = root / "training" / "01-collect"
+    return dirs
 
 
 def init(root: Path) -> None:

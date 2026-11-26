@@ -100,24 +100,35 @@ def mineru_figure_pages(content_list: list[dict]) -> set[int]:
             if item.get("type") in visual}
 
 
-def compare(scan_rows: list[dict], baseline_pages: set[int]) -> dict:
-    """把页级判定与 MinerU 全量基准对照。"""
+def compare_with_mineru(scan_rows: list[dict], baseline_pages: set[int],
+                        truth_pages: set[int] | None = None) -> dict:
+    """把页级判定与 MinerU 基准对照。
+
+    注意：MinerU 不是真值——它也会把结构式判成 chart/equation。
+    所以默认只报 agreement（与 MinerU 一致率），不叫 precision/recall。
+    只有传入人工标注的 truth_pages 时才输出真正的 precision/recall。
+    """
     predicted = {row["page"] for row in scan_rows if row["has_figure"]}
-    truth = set(baseline_pages)
-    tp = len(predicted & truth)
-    fp = len(predicted - truth)
-    fn = len(truth - predicted)
-    precision = tp / (tp + fp) if tp + fp else 1.0
-    recall = tp / (tp + fn) if tp + fn else 1.0
-    return {
+    baseline = set(baseline_pages)
+    tp = len(predicted & baseline)
+    fp = len(predicted - baseline)
+    fn = len(baseline - predicted)
+    agreement = tp / (tp + fp + fn) if (tp + fp + fn) else 1.0
+    out = {
         "pages": len(scan_rows),
-        "baseline_pages": len(truth),
+        "baseline_pages": len(baseline),
         "predicted_pages": len(predicted),
-        "true_positive": tp,
-        "false_positive": fp,
-        "false_negative": fn,
-        "precision": round(precision, 4),
-        "recall": round(recall, 4),
-        "missed_pages": sorted(truth - predicted),
+        "agreement": round(agreement, 4),
+        "agreement_fp": fp,
+        "agreement_fn": fn,
+        "missed_pages": sorted(baseline - predicted),
         "saved_pages": len(scan_rows) - len(predicted),
     }
+    if truth_pages is not None:
+        t = set(truth_pages)
+        t_tp = len(predicted & t)
+        precision = t_tp / len(predicted) if predicted else 1.0
+        recall = t_tp / len(t) if t else 1.0
+        out["precision"] = round(precision, 4)
+        out["recall"] = round(recall, 4)
+    return out

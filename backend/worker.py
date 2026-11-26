@@ -135,12 +135,12 @@ class Worker:
                 for pinfo in [detect_page(model, page) for page in doc]:
                     if not pinfo["boxes"]:
                         continue
-                    pix = doc[pinfo["page"]-1].get_pixmap(dpi=DETECT_DPI)
+                    # 直接用原分辨率渲染到 300dpi（不是 150dpi 插值放大——
+                    # 插值不会增加信息，细键线仍是模糊的 2px，拓扑检测检不出环）。
+                    pix = doc[pinfo["page"]-1].get_pixmap(dpi=CROP_DPI)
                     arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
                     img = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR) if pix.n >= 3 else arr
-                    scale = CROP_DPI / DETECT_DPI
-                    if scale > 1:
-                        img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+                    scale = CROP_DPI / DETECT_DPI  # 检测框来自 150dpi，换算到 300dpi
                     for box in pinfo["boxes"]:
                         x1, y1, x2, y2 = [int(v * scale) for v in box["bbox"]]
                         pad = 6 * int(scale)
@@ -220,6 +220,13 @@ class Worker:
                 except Exception:
                     continue
 
+        # 字符模板：让 topo.py 能读出结构式里的 N/O/S 标签（没有则 labels 为空）。
+        # 找不到时不阻断，但 warnings 会提示"未提供字符模板"。
+        tpl = Path(__file__).resolve().parent.parent / "assets" / "templates.json"
+        if not tpl.exists():
+            tpl = Path(self.data_root) / "templates.json"
+        templates_path = str(tpl) if tpl.exists() else None
+
         cand_root = out_dir / "candidates"
         made = 0
         for f in figures:
@@ -227,7 +234,8 @@ class Worker:
             if not img.exists():
                 continue
             try:
-                build_candidates(f["figure_id"], img, index, style, cand_root)
+                build_candidates(f["figure_id"], img, index, style, cand_root,
+                                 templates_path=templates_path)
                 made += 1
             except Exception as exc:
                 print(f"[worker] 候选生成失败 {f['figure_id']}: {exc}", flush=True)

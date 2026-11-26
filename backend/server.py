@@ -562,8 +562,9 @@ class Handler(BaseHTTPRequestHandler):
             body = ("前端尚未构建。先在 frontend/ 执行 npm run build，"
                     "或直接用 CLI 处理数据。\n").encode("utf-8")
             return self._send(200, body, "text/plain; charset=utf-8")
-        target = FRONTEND_DIST / ("index.html" if path in ("/", "") else path.lstrip("/"))
-        if not target.is_file():
+        rel = "index.html" if path in ("/", "") else path.lstrip("/")
+        target = safe_join(FRONTEND_DIST, rel)   # 挡住 ../ 穿越读源码
+        if target is None or not target.is_file():
             target = FRONTEND_DIST / "index.html"
         ctype = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
         return self._send(200, target.read_bytes(), ctype)

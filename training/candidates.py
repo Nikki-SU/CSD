@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -30,7 +31,9 @@ def _render_and_score(query_img: Path, cand: Candidate, style: dict, out_dir: Pa
     import cv2
     import numpy as np
 
-    name = f"{cand.cid or 'c'}_{len(cand.smiles)}_{abs(hash(cand.smiles)) % 10000}"
+    # 用 sha256 而非内置 hash：内置 hash 跨进程随机化，文件名不稳定、缓存失效。
+    stable = hashlib.sha256(cand.smiles.encode("utf-8")).hexdigest()[:8]
+    name = f"{cand.cid or 'c'}_{len(cand.smiles)}_{stable}"
     png = out_dir / "renders" / f"{name}.png"
     try:
         render_smiles(cand.smiles, style, png)

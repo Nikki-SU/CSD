@@ -37,3 +37,5 @@ models/
 # assets/ 里只有纯训练产物；带 _local 的是数据明细，不进库
 assets/**/*_local.json
 assets/*_local.json
+# 回传记录含本机绝对路径，不属于训练产物，不进库
+assets/.last_publish.json
