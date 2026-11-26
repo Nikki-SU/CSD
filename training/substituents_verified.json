@@ -1,0 +1,1456 @@
+{
+  "Ac": {
+    "source": "existing_lib_1124",
+    "smiles": "CC(=O)",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "Ad": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Alk": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "All": {
+    "source": "existing_lib_1124",
+    "smiles": "CC=C",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "Alloc": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Am": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "An": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Ar": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Bn": {
+    "source": "existing_lib_1124",
+    "smiles": "Cc1ccccc1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 7,
+      "n_e": 7
+    }
+  },
+  "Boc": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Bs": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Bt": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Bu": {
+    "source": "existing_lib_1124",
+    "smiles": "CCCC",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "Bz": {
+    "source": "existing_lib_1124",
+    "smiles": "C(=O)c1ccccc1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 8,
+      "n_e": 8
+    }
+  },
+  "Bzl": {
+    "source": "pubchem",
+    "smiles": "[CH2]C1=CC=CC=C1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 7,
+      "n_e": 7
+    }
+  },
+  "CCl3": {
+    "source": "existing_lib_1124",
+    "smiles": "C(Cl)(Cl)Cl",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "Cl"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "CF3": {
+    "source": "existing_lib_1124",
+    "smiles": "C(F)(F)F",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "F"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "CHO": {
+    "source": "existing_lib_1124",
+    "smiles": "C=O",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "CN": {
+    "source": "existing_lib_1124",
+    "smiles": "C#N",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "CO2H": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "CO2R": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "CONH2": {
+    "source": "existing_lib_1124",
+    "smiles": "C(=O)N",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N",
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "Cbo": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Cbz": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Chx": {
+    "source": "pubchem",
+    "smiles": "C1CC[CH]CC1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 6,
+      "n_e": 6
+    }
+  },
+  "Cp": {
+    "source": "pubchem",
+    "smiles": "C1=C[CH]C=C1",
+    "metrics": {
+      "ring_sizes": [
+        5
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 5,
+      "n_e": 5
+    }
+  },
+  "Cp*": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Cy": {
+    "source": "existing_lib_1124",
+    "smiles": "C1CCCCC1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 6,
+      "n_e": 6
+    }
+  },
+  "Cyp": {
+    "source": "pubchem",
+    "smiles": "C1CC[CH]C1",
+    "metrics": {
+      "ring_sizes": [
+        5
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 5,
+      "n_e": 5
+    }
+  },
+  "D": {
+    "source": "pubchem",
+    "smiles": "[HH]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "Dipp": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Dmt": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "E": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "EE": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Et": {
+    "source": "existing_lib_1124",
+    "smiles": "CC",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "Fmoc": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Het": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Hp": {
+    "source": "pubchem",
+    "smiles": "CCCCCC[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 7,
+      "n_e": 6
+    }
+  },
+  "Hx": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Im": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Is": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "MOM": {
+    "source": "pubchem",
+    "smiles": "CO[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "Me": {
+    "source": "existing_lib_1124",
+    "smiles": "C",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "Mem": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Mes": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Mom": {
+    "source": "pubchem",
+    "smiles": "CO[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "Ms": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "N3": {
+    "source": "existing_lib_1124",
+    "smiles": "N=[N+]=[N-]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "NC": {
+    "source": "existing_lib_1124",
+    "smiles": "[N+]#[C-]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "NEt2": {
+    "source": "existing_lib_1124",
+    "smiles": "N(CC)CC",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 5,
+      "n_e": 4
+    }
+  },
+  "NH2": {
+    "source": "existing_lib_1124",
+    "smiles": "N",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "NHMe": {
+    "source": "existing_lib_1124",
+    "smiles": "NC",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "NMe2": {
+    "source": "existing_lib_1124",
+    "smiles": "N(C)C",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "NO": {
+    "source": "existing_lib_1124",
+    "smiles": "N=O",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N",
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "NO2": {
+    "source": "existing_lib_1124",
+    "smiles": "[N+](=O)[O-]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "N",
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "NPhth": {
+    "source": "pubchem",
+    "smiles": "C1=CC=C2C(=C1)C(=O)N(C2=O)CO",
+    "metrics": {
+      "ring_sizes": [
+        5,
+        6
+      ],
+      "hetero": [
+        "N",
+        "O"
+      ],
+      "has_ring": true,
+      "has_multi_ring": true,
+      "has_fused_fragment": true,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 13,
+      "n_e": 14
+    }
+  },
+  "Neo": {
+    "source": "pubchem",
+    "smiles": "CC(C)(C)[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 5,
+      "n_e": 4
+    }
+  },
+  "Nf": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Np": {
+    "source": "pubchem",
+    "smiles": "CC(C)(C)[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 5,
+      "n_e": 4
+    }
+  },
+  "Nph": {
+    "source": "pubchem",
+    "smiles": "CN1C2=C(C(=O)N(C1=O)C)N(C=N2)CC(CO)O",
+    "metrics": {
+      "ring_sizes": [
+        5,
+        6
+      ],
+      "hetero": [
+        "N",
+        "O"
+      ],
+      "has_ring": true,
+      "has_multi_ring": true,
+      "has_fused_fragment": true,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 18,
+      "n_e": 19
+    }
+  },
+  "Ns": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Nu": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "OBs": {
+    "source": "pubchem",
+    "smiles": "C1=CC(=CC=C1S(=O)(=O)[O-])Br",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [
+        "Br",
+        "O",
+        "S"
+      ],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 11,
+      "n_e": 11
+    }
+  },
+  "OBz": {
+    "source": "pubchem",
+    "smiles": "C1=CC=C(C=C1)C(=O)[O-]",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 9,
+      "n_e": 9
+    }
+  },
+  "OEt": {
+    "source": "existing_lib_1124",
+    "smiles": "OCC",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "OH": {
+    "source": "existing_lib_1124",
+    "smiles": "O",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "OMe": {
+    "source": "existing_lib_1124",
+    "smiles": "OC",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "OMs": {
+    "source": "pubchem",
+    "smiles": "CS(=O)(=O)O",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O",
+        "S"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 5,
+      "n_e": 4
+    }
+  },
+  "ONf": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "ONs": {
+    "source": "pubchem",
+    "smiles": "C1=CC(=CC=C1[N+](=O)[O-])S(=O)(=O)[O-]",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [
+        "N",
+        "O",
+        "S"
+      ],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 13,
+      "n_e": 13
+    }
+  },
+  "OPiv": {
+    "source": "pubchem",
+    "smiles": "CC(C)(C)C(=O)[O-]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 7,
+      "n_e": 6
+    }
+  },
+  "OTf": {
+    "source": "pubchem",
+    "smiles": "C(F)(F)(F)S(=O)(=O)[O-]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "F",
+        "O",
+        "S"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 8,
+      "n_e": 7
+    }
+  },
+  "OTs": {
+    "source": "pubchem",
+    "smiles": "CC1=CC=C(C=C1)S(=O)(=O)[O-]",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [
+        "O",
+        "S"
+      ],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 11,
+      "n_e": 11
+    }
+  },
+  "PMB": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Ph": {
+    "source": "existing_lib_1124",
+    "smiles": "c1ccccc1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 6,
+      "n_e": 6
+    }
+  },
+  "PhSO2": {
+    "source": "pubchem",
+    "smiles": "C1=CC=C(C=C1)S(=O)[O-]",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [
+        "O",
+        "S"
+      ],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 9,
+      "n_e": 9
+    }
+  },
+  "Piv": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Pmb": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Pn": {
+    "source": "pubchem",
+    "smiles": "CCCC[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 5,
+      "n_e": 4
+    }
+  },
+  "Pr": {
+    "source": "existing_lib_1124",
+    "smiles": "CCC",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "R": {
+    "source": "existing_lib_1124",
+    "smiles": "[*:1]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "R'": {
+    "source": "existing_lib_1124",
+    "smiles": "[*:2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "R''": {
+    "source": "existing_lib_1124",
+    "smiles": "[*:3]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "SO2R": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "SO3H": {
+    "source": "existing_lib_1124",
+    "smiles": "S(=O)(=O)O",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "O",
+        "S"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "SR": {
+    "source": "pubchem",
+    "smiles": "C[S]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "S"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "Sem": {
+    "source": "pubchem",
+    "smiles": "C1=CC=C(C=C1)COCC(CO)N",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [
+        "N",
+        "O"
+      ],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 13,
+      "n_e": 13
+    }
+  },
+  "T": {
+    "source": "pubchem",
+    "smiles": "[HH]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 1,
+      "n_e": 0
+    }
+  },
+  "TBDMS": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "TBDPS": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "THP": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "TMS": {
+    "source": "existing_lib_1124",
+    "smiles": "[Si](C)(C)C",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "Si"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "Tbs": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Tes": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Tf": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Tipp": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Tips": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Tol": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Tos": {
+    "source": "pubchem",
+    "smiles": "C(C(Cl)(Cl)Cl)(O)O",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "Cl",
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 7,
+      "n_e": 6
+    }
+  },
+  "Tr": {
+    "source": "pubchem",
+    "smiles": "C1=CC=C(C=C1)[C](C2=CC=CC=C2)C3=CC=CC=C3",
+    "metrics": {
+      "ring_sizes": [
+        6,
+        6,
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": true,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 19,
+      "n_e": 21
+    }
+  },
+  "Troc": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Trt": {
+    "source": "pubchem",
+    "smiles": "C1=CC=C(C=C1)[C](C2=CC=CC=C2)C3=CC=CC=C3",
+    "metrics": {
+      "ring_sizes": [
+        6,
+        6,
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": true,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 19,
+      "n_e": 21
+    }
+  },
+  "Ts": {
+    "source": "pubchem",
+    "smiles": "C(C(Cl)(Cl)Cl)(O)O",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [
+        "Cl",
+        "O"
+      ],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 7,
+      "n_e": 6
+    }
+  },
+  "Vi": {
+    "source": "existing_lib_1124",
+    "smiles": "C=C",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 2,
+      "n_e": 1
+    }
+  },
+  "X": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "Z": {
+    "source": "no_smiles",
+    "smiles": null,
+    "metrics": null
+  },
+  "i-Bu": {
+    "source": "pubchem",
+    "smiles": "CC(C)[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "i-Pr": {
+    "source": "existing_lib_1124",
+    "smiles": "C(C)C",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "n-Bu": {
+    "source": "pubchem",
+    "smiles": "CCC[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "n-Pr": {
+    "source": "pubchem",
+    "smiles": "CC[CH2]",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 3,
+      "n_e": 2
+    }
+  },
+  "s-Bu": {
+    "source": "existing_lib_1124",
+    "smiles": "CCC(C)",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "t-Bu": {
+    "source": "existing_lib_1124",
+    "smiles": "CC(C)(C)",
+    "metrics": {
+      "ring_sizes": [],
+      "hetero": [],
+      "has_ring": false,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": false,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 4,
+      "n_e": 3
+    }
+  },
+  "Φ": {
+    "source": "pubchem",
+    "smiles": "C1=CC=[C]C=C1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 6,
+      "n_e": 6
+    }
+  },
+  "φ": {
+    "source": "pubchem",
+    "smiles": "C1=CC=[C]C=C1",
+    "metrics": {
+      "ring_sizes": [
+        6
+      ],
+      "hetero": [],
+      "has_ring": true,
+      "has_multi_ring": false,
+      "has_fused_fragment": false,
+      "has_disconnected_fragment": true,
+      "small_ring": false,
+      "big_ring": false,
+      "n_v": 6,
+      "n_e": 6
+    }
+  }
+}
